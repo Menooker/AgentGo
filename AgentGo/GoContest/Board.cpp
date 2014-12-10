@@ -51,10 +51,12 @@ bool Board::put(int agent,int row,int col){
 	#ifdef GO_DEBUG
 		if ( data[i][j] != GO_NULL ){
 			dprintf("error in put piece in %d %d, the position is already occupied\n", row, col);
+			AG_PANIC(0);
 			return false;
 		}
 		if ( !Piece(agent,row,col).legal() ){
 			dprintf("error in put piece in %d %d, the piece is illegal\n", row, col);
+			AG_PANIC(0);
 			return false;
 		}
 	#endif
@@ -144,6 +146,7 @@ Piece Board::getPiece(int row,int col){
 	#ifdef GO_DEBUG
 		if( row<0 || col<0 || row>BOARD_SIZE-1 || col>BOARD_SIZE-1 ){
 			dprintf("error in get piece in %d %d, the position is illegal\n", row, col);
+			AG_PANIC(0);
 			return Piece(GO_NULL,0,0);
 		}
 	#endif
@@ -229,6 +232,7 @@ SetNode* Board::getSet(int row, int col){
 		#ifdef GO_DEBUG
 			if ( idx == UNKNOWN_IDX ){
 				dprintf("error when getting parent set node: try to get a unknown index", idx);
+				AG_PANIC(0);
 				break;
 			}
 		#endif
@@ -280,9 +284,12 @@ void Board::killSetNode(SetNode* sn){
 Piece Board::getRandomPiece(int agent){
 	int range = BOARD_SIZE*BOARD_SIZE - num_black - num_white;
 	#ifdef GO_DEBUG
-		if (range<=0)	dprintf("error in random piece: try to get random piece when there is no space");
+		if (range<=0)	{
+			dprintf("error in random piece: try to get random piece when there is no space");
+			AG_PANIC(0);
+		}
 	#endif
-	int idx = range * rand() / RAND_MAX;
+	int idx = rand() % range;
 	int sp_idx_sm=0, sp_idx_lg=0;
 	for( int i=0; i<SPLIT_NUM_LARGE; i++){
 		if( idx - space_split_lg[i] < 0 )	break;
@@ -299,7 +306,10 @@ Piece Board::getRandomPiece(int agent){
 		sp_idx_sm ++;
 	}
 	#ifdef GO_DEBUG
-		if (sp_idx_sm>=BOARD_SIZE)	dprintf("error in random piece: split index out of range");
+		if (sp_idx_sm>=BOARD_SIZE){
+			dprintf("error in random piece: split index out of range");
+			AG_PANIC(0);
+		}
 	#endif
 	int col;
 	for( int j=0; j<BOARD_SIZE; j++){
