@@ -40,9 +40,11 @@ void Board::clear(){
 	num_black = num_white = 0;
 	for ( i=0; i<BOARD_SIZE; i++){
 		space_split_sm[i] = BOARD_SIZE;
+		reserve_split_sm[0][i] = reserve_split_sm[1][i] = 0;
 	}
 	for ( i=0; i<SPLIT_NUM_LARGE; i++){
 		space_split_lg[i] = SPLIT_SIZE_LARGE * BOARD_SIZE;
+		reserve_split_lg[0][i] = reserve_split_lg[1][i] = 0;
 	}
 }
 
@@ -53,12 +55,10 @@ bool Board::put(int agent,int row,int col){
 		if ( data[i][j] != GO_NULL ){
 			dprintf("error in put piece in %d %d, the position is already occupied\n", row, col);
 			AG_PANIC(0);
-			return false;
 		}
 		if ( !Piece(agent,row,col).legal() ){
 			dprintf("error in put piece in %d %d, the piece is illegal\n", row, col);
 			AG_PANIC(0);
-			return false;
 		}
 	#endif
 
@@ -185,9 +185,13 @@ void Board::clone(const Board &board){
 	#endif
 	for( i=0; i<BOARD_SIZE; i++ ){
 		space_split_sm[i] = board.space_split_sm[i] ;
+		reserve_split_sm[0][i] = board.reserve_split_sm[0][i];
+		reserve_split_sm[1][i] = board.reserve_split_sm[1][i];
 	}
 	for( i=0; i<SPLIT_NUM_LARGE; i++ ){
 		space_split_lg[i] = board.space_split_lg[i] ;
+		reserve_split_lg[0][i] = board.reserve_split_lg[0][i];
+		reserve_split_lg[1][i] = board.reserve_split_lg[1][i];
 	}
 }
 
@@ -325,6 +329,55 @@ Piece Board::getRandomPiece(int agent){
 		}
 	}
 	return Piece(agent,sp_idx_sm,col);
+}
+
+bool Board::checkSuicide(int agent, int row, int col){
+	int i = row, j = col;
+	int true_hp = 0;
+	int minus_hp = 0;
+	SetNode* s[4] = {0,0,0,0};
+	if( i-1>=0 ){
+		if( data[i-1][j]!=GO_NULL && data[i-1][j]==agent ){
+			s[0] = getSet(i-1,j);
+			minus_hp++;
+		}
+		else if( data[i-1][j]==GO_NULL ) minus_hp--;
+	}
+	if( j-1>=0 ){
+		if( data[i][j-1]!=GO_NULL && data[i][j-1]==agent ){
+			s[1] = getSet(i,j-1);
+			minus_hp++;
+		}
+		else if( data[i][j-1]==GO_NULL ) minus_hp--;
+	}
+	if( i+1<BOARD_SIZE ){
+		if( data[i+1][j]!=GO_NULL && data[i+1][j]==agent ){
+			s[2] = getSet(i+1,j);
+			minus_hp++;
+		}
+		else if( data[i+1][j]==GO_NULL ) minus_hp--;
+	}
+	if( j+1<BOARD_SIZE ){
+		if( data[i][j+1]!=GO_NULL && data[i][j+1]==agent ){
+			s[3] = getSet(i,j+1);
+			minus_hp++;
+		}
+		else if( data[i][j+1]==GO_NULL ) minus_hp--;
+	}
+	// remove repeated setnodes;
+	for( int m=0; m<3; m++){
+		if( s[m] == NULL ) continue;
+		for( int n=m+1; n<4; n++){
+			if( s[m] == s[n] ) s[n] = NULL;
+		}
+	}
+	for( int m=0; m<4; m++){
+		if( s[m]!=NULL) true_hp += s[m]->hp;
+	}
+	if( true_hp - minus_hp <=0 ) return true;
+	else{
+		return false;
+	}
 }
 
 /* old ones of recursive version
