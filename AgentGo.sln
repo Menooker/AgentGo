@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AgentGo", "AgentGo\AgentGo.vcxproj", "{15E3B1EA-EF66-40FA-A3DB-372F752B1020}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DbgDisplay", "DbgDisplay\DbgDisplay.vcxproj", "{4D173A92-21F4-45A6-B8C0-B8BFB7ABABA4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{15E3B1EA-EF66-40FA-A3DB-372F752B1020}.Debug|Win32.ActiveCfg = Debug|Win32
+		{15E3B1EA-EF66-40FA-A3DB-372F752B1020}.Debug|Win32.Build.0 = Debug|Win32
+		{15E3B1EA-EF66-40FA-A3DB-372F752B1020}.Release|Win32.ActiveCfg = Release|Win32
+		{15E3B1EA-EF66-40FA-A3DB-372F752B1020}.Release|Win32.Build.0 = Release|Win32
+		{4D173A92-21F4-45A6-B8C0-B8BFB7ABABA4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4D173A92-21F4-45A6-B8C0-B8BFB7ABABA4}.Debug|Win32.Build.0 = Debug|Win32
+		{4D173A92-21F4-45A6-B8C0-B8BFB7ABABA4}.Release|Win32.ActiveCfg = Release|Win32
+		{4D173A92-21F4-45A6-B8C0-B8BFB7ABABA4}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
