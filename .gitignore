@@ -28,5 +28,5 @@ _ReSharper*/
 *.vssscc
 $tf*/
 *.sdf
-ipch/agentgo-ca995552/agentgo-c5d6b991.ipch
+**/*.ipch
 AgentGo.opensdf
