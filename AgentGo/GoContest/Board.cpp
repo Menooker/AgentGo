@@ -1,22 +1,22 @@
-
 #include "Board.h"
+#include "..\DbgPipe.h"
 
 Board::Board(void)
 {
 	//rcsv_flags = NULL;
-	
 	clear();
+}
+
+Board::Board(const Board *board){
+	clone(*board);
 }
 
 Board::Board(const Board &board){
 	clone(board);
 }
-Board::Board(const Board *pboard){
-	clone(*pboard);
-}
+
 Board::~Board(void)
 {
-	//printf("RElease %d\n",this);
 	release();
 }
 
@@ -31,28 +31,53 @@ void Board::clear(){
 	for ( i=0; i<BOARD_SIZE*BOARD_SIZE; i++){
 		set_nodes[i].clear();
 	}
-	for( i=0; i<history_head; i++){
-		history[i].clear();
+	#ifdef	GO_HISTORY	
+		for( i=0; i<history_head; i++){
+			history[i].clear();
+		}
+		history_head = 0;
+	#endif
+	for ( i=0; i<BOARD_SIZE; i++){
+		space_split_sm[i] = BOARD_SIZE;
 	}
-	history_head = 0;
+	for ( i=0; i<SPLIT_NUM_LARGE; i++){
+		space_split_lg[i] = SPLIT_SIZE_LARGE * BOARD_SIZE;
+	}
 }
 
 bool Board::put(int agent,int row,int col){
 	int i = row, j = col;
-	if ( data[i][j] != GO_NULL ){
-		dprintf("error in put piece in %d %d, the position is already occupied\n", row, col);
-		return false;
-	}
-	if ( !Piece(agent,row,col).legal() ){
-		dprintf("error in put piece in %d %d, the piece is illegal\n", row, col);
-		return false;
-	}
+
+	#ifdef GO_DEBUG
+		if ( data[i][j] != GO_NULL ){
+			dprintf("error in put piece in %d %d, the position is already occupied\n", row, col);
+			return false;
+		}
+		if ( !Piece(agent,row,col).legal() ){
+			dprintf("error in put piece in %d %d, the piece is illegal\n", row, col);
+			return false;
+		}
+	#endif
+
 	data[i][j] = agent;
-	history[history_head] = Piece(agent,row,col);
-	history_head++;
+	if( agent == GO_BLACK ) num_black++;
+	else num_white++;
+
+	// append to the history list
+	#ifdef GO_HISTORY
+		history[history_head] = Piece(agent,row,col);
+		history_head++;
+	#endif
+
+	// init the setnode
 	int idx = i * BOARD_SIZE + j;
 	set_nodes[idx].init(idx,Piece(agent,row,col),0);
-	
+
+	// refresh the splits
+	space_split_sm[i] -= 1;
+	int i_lg = i / SPLIT_SIZE_LARGE;
+	space_split_lg[i_lg] -= 1;
+
 	// calculating the hp of the new piece before calculating the sorroundings 
 	// in case that if some pieces killed, hp will be added more than twice. 
 	int hp = 0;	
@@ -116,10 +141,12 @@ bool Board::put(const Piece &piece){
 }
 
 Piece Board::getPiece(int row,int col){
-	if( row<0 || col<0 || row>BOARD_SIZE-1 || col>BOARD_SIZE-1 ){
-		dprintf("error in get piece in %d %d, the position is illegal\n", row, col);
-		return Piece(GO_NULL,0,0);
-	}
+	#ifdef GO_DEBUG
+		if( row<0 || col<0 || row>BOARD_SIZE-1 || col>BOARD_SIZE-1 ){
+			dprintf("error in get piece in %d %d, the position is illegal\n", row, col);
+			return Piece(GO_NULL,0,0);
+		}
+	#endif
 	return Piece(data[row][col],row,col);
 }
 
@@ -146,10 +173,18 @@ void Board::clone(const Board &board){
 	for( i=0; i<BOARD_SIZE*BOARD_SIZE; i++ ){
 		set_nodes[i] = board.set_nodes[i];
 	}
-	for( i=0; i<MAX_HISTORY_LENGTH; i++){
-		history[i] = board.history[i];
+	#ifdef GO_HISTORY
+		for( i=0; i<MAX_HISTORY_LENGTH; i++){
+			history[i] = board.history[i];
+		}
+		history_head = board.history_head;
+	#endif
+	for( i=0; i<BOARD_SIZE; i++ ){
+		space_split_sm[i] = board.space_split_sm[i] ;
 	}
-	history_head = board.history_head;
+	for( i=0; i<SPLIT_NUM_LARGE; i++ ){
+		space_split_lg[i] = board.space_split_lg[i] ;
+	}
 }
 
 void Board::release(){
@@ -191,10 +226,12 @@ SetNode* Board::getSet(int row, int col){
 			continue;
 		}
 		idx = ptr->pnode;
-		if ( idx == UNKNOWN_IDX ){
-			dprintf("error when getting parent set node: try to get a unknown index", idx);
-			break;
-		}
+		#ifdef GO_DEBUG
+			if ( idx == UNKNOWN_IDX ){
+				dprintf("error when getting parent set node: try to get a unknown index", idx);
+				break;
+			}
+		#endif
 		st.push(&set_nodes[idx]);
 	}
 	return result;
@@ -226,14 +263,53 @@ void Board::killSetNode(SetNode* sn){
 	for( it=pieces.begin(); it!=pieces.end(); it++ ){
 		Piece p = *it;
 		int i = p.row, j = p.col, agent = p.agent;
+
 		data[i][j] = GO_NULL;
 		set_nodes[i*BOARD_SIZE+j].clear();	// this clear has also cleared the *sn itself;
-		int hp = 0;	
+		space_split_sm[i] += 1;
+		int i_lg = i / SPLIT_SIZE_LARGE;
+		space_split_lg[i_lg] += 1;
+
 		if ( i-1>=0 && data[i-1][j]!=GO_NULL && data[i-1][j]!=agent)	( getSet(i-1,j)->hp ) ++;
 		if ( j-1>=0 && data[i][j-1]!=GO_NULL && data[i][j-1]!=agent)	( getSet(i,j-1)->hp ) ++;
 		if ( i+1<BOARD_SIZE && data[i+1][j]!=GO_NULL && data[i+1][j]!=agent)	( getSet(i+1,j)->hp ) ++;
 		if ( j+1<BOARD_SIZE && data[i][j+1]!=GO_NULL && data[i][j+1]!=agent)	( getSet(i,j+1)->hp ) ++;
 	}
+}
+
+Piece Board::getRandomPiece(int agent){
+	int range = BOARD_SIZE*BOARD_SIZE - num_black - num_white;
+	#ifdef GO_DEBUG
+		if (range<=0)	dprintf("error in random piece: try to get random piece when there is no space");
+	#endif
+	int idx = range * rand() / RAND_MAX;
+	int sp_idx_sm=0, sp_idx_lg=0;
+	for( int i=0; i<SPLIT_NUM_LARGE; i++){
+		if( idx - space_split_lg[i] < 0 )	break;
+		idx -= space_split_lg[i];
+		sp_idx_lg ++;
+	}
+	int sp_start_sm = sp_idx_lg * SPLIT_SIZE_LARGE;
+	int sp_end_sm = sp_start_sm + SPLIT_SIZE_LARGE;
+	if (sp_end_sm > BOARD_SIZE ) sp_end_sm = BOARD_SIZE;
+	sp_idx_sm = sp_start_sm;
+	for( int i=sp_start_sm; i<sp_end_sm; i++){
+		if( idx - space_split_sm[i] < 0 )	break;
+		idx -= space_split_sm[i];
+		sp_idx_sm ++;
+	}
+	#ifdef GO_DEBUG
+		if (sp_idx_sm>=BOARD_SIZE)	dprintf("error in random piece: split index out of range");
+	#endif
+	int col;
+	for( int j=0; j<BOARD_SIZE; j++){
+		if( data[sp_idx_sm][j] == GO_NULL )	idx --;
+		if( idx==0 ){
+			col = j;
+			break;
+		}
+	}
+	return Piece(agent,sp_idx_sm,col);
 }
 
 /* old ones of recursive version
