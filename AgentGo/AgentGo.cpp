@@ -70,7 +70,7 @@ class MyGame:public GTPAdapter
 	{
 
 	
-		MyJob* jobs[13][13]={0};
+		MyJob* jobs[13][13]={0};//wsy
 		Scheduler<MyWorker>* psch=new Scheduler<MyWorker>(true);
 
 		/////////////submit the jobs
