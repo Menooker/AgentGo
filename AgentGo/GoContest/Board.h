@@ -24,6 +24,10 @@ private:
 	SetNode* getSet(int row, int col);
 	void unionSetNode(SetNode* s1, SetNode* s2);
 	void killSetNode(SetNode* sn);
+	bool checkTrueEye(int agent, int row, int col);
+	bool checkSuicide(int agent, int row, int col);
+	void addReserve(int agent, int row, int col);
+	void removeReserve(int row, int col);
 
 public:
 	// Variables
@@ -32,7 +36,12 @@ public:
 	int    num_black;
 	int    num_white;
 	int    space_split_sm[BOARD_SIZE];	// records the space of every row
-	int	   space_split_lg[SPLIT_NUM_LARGE];   // records the space of the 0-5 and 6-11 row,not including the 12th row.
+	int	   space_split_lg[SPLIT_NUM_LARGE];   // records the space of the 0-5 and 6-11 row,not including the 12th row
+	int    reserve[BOARD_SIZE][BOARD_SIZE];
+	int    reserve_split_sm[2][BOARD_SIZE];	// records the reserved space of every row respectively for black and white
+	int	   reserve_split_lg[2][SPLIT_NUM_LARGE];   // records the reserved space of the 0-5 and 6-11 row,not including the 12th row
+	int    reserve_total[2];	// total number of the reserved place for each
+	
 
 #ifdef GO_HISTORY
 	Piece  history[MAX_HISTORY_LENGTH]; // pointers point to the head piece in data

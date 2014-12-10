@@ -25,6 +25,7 @@ void Board::clear(){
 	for( i=0; i<BOARD_SIZE; i++ ){
 		for( j=0; j<BOARD_SIZE; j++ ){
 			data[i][j] = GO_NULL;
+			reserve[i][j] = GO_NULL;
 			// hp_map[i][j] = 0;
 		}
 	}
@@ -40,10 +41,13 @@ void Board::clear(){
 	num_black = num_white = 0;
 	for ( i=0; i<BOARD_SIZE; i++){
 		space_split_sm[i] = BOARD_SIZE;
+		reserve_split_sm[0][i] = reserve_split_sm[1][i] = 0;
 	}
 	for ( i=0; i<SPLIT_NUM_LARGE; i++){
 		space_split_lg[i] = SPLIT_SIZE_LARGE * BOARD_SIZE;
+		reserve_split_lg[0][i] = reserve_split_lg[1][i] = 0;
 	}
+	reserve_total[0] = reserve_total[1] =0;
 }
 
 bool Board::put(int agent,int row,int col){
@@ -53,16 +57,15 @@ bool Board::put(int agent,int row,int col){
 		if ( data[i][j] != GO_NULL ){
 			dprintf("error in put piece in %d %d, the position is already occupied\n", row, col);
 			AG_PANIC(0);
-			return false;
 		}
 		if ( !Piece(agent,row,col).legal() ){
 			dprintf("error in put piece in %d %d, the piece is illegal\n", row, col);
 			AG_PANIC(0);
-			return false;
 		}
 	#endif
 
 	data[i][j] = agent;
+	if( reserve[i][j] != GO_NULL ) removeReserve(i,j);
 	if( agent == GO_BLACK ) num_black++;
 	else num_white++;
 
@@ -171,6 +174,7 @@ void Board::clone(const Board &board){
 	for( i=0; i<BOARD_SIZE; i++ ){
 		for( j=0; j<BOARD_SIZE; j++ ){
 			data[i][j] = board.data[i][j];
+			reserve[i][j] = board.reserve[i][j];
 			// hp_map[i][j] = board.hp_map[i][j];
 		}
 	}
@@ -185,10 +189,16 @@ void Board::clone(const Board &board){
 	#endif
 	for( i=0; i<BOARD_SIZE; i++ ){
 		space_split_sm[i] = board.space_split_sm[i] ;
+		reserve_split_sm[0][i] = board.reserve_split_sm[0][i];
+		reserve_split_sm[1][i] = board.reserve_split_sm[1][i];
 	}
 	for( i=0; i<SPLIT_NUM_LARGE; i++ ){
 		space_split_lg[i] = board.space_split_lg[i] ;
+		reserve_split_lg[0][i] = board.reserve_split_lg[0][i];
+		reserve_split_lg[1][i] = board.reserve_split_lg[1][i];
 	}
+	reserve_total[0] = board.reserve_total[0];
+	reserve_total[1] = board.reserve_total[1];
 }
 
 void Board::release(){
@@ -285,48 +295,162 @@ void Board::killSetNode(SetNode* sn){
 }
 
 Piece Board::getRandomPiece(int agent){
-	int range = BOARD_SIZE*BOARD_SIZE - num_black - num_white;
-	#ifdef GO_DEBUG
-		if (range<=0)	{
-			dprintf("error in random piece: try to get random piece when there is no space");
-			AG_PANIC(0);
-		}
-	#endif
-	int idx = rand() % range;
-	int sp_idx_sm=0, sp_idx_lg=0;
-	for( int i=0; i<SPLIT_NUM_LARGE; i++){
-		if( idx - space_split_lg[i] < 0 )	break;
-		idx -= space_split_lg[i];
-		sp_idx_lg ++;
-	}
-	int sp_start_sm = sp_idx_lg * SPLIT_SIZE_LARGE;
-	int sp_end_sm = sp_start_sm + SPLIT_SIZE_LARGE;
-	if (sp_end_sm > BOARD_SIZE ) sp_end_sm = BOARD_SIZE;
-	sp_idx_sm = sp_start_sm;
-	for( int i=sp_start_sm; i<sp_end_sm; i++){
-		if( idx - space_split_sm[i] < 0 )	break;
-		idx -= space_split_sm[i];
-		sp_idx_sm ++;
-	}
-	#ifdef GO_DEBUG
-		if (sp_idx_sm>=BOARD_SIZE){
-			dprintf("error in random piece: split index out of range");
-			AG_PANIC(0);
-		}
-	#endif
-	int col;
-	for( int j=0; j<BOARD_SIZE; j++){
-		if( data[sp_idx_sm][j] == GO_NULL ){
-			if( idx==0 ){
-				col = j;
-				break;
+	int row, col;
+	bool flag = true;
+	while(flag){
+		flag = false;
+		int range = BOARD_SIZE*BOARD_SIZE - num_black - num_white - reserve_total[agent-1];
+		if (range==0) return Piece();
+		#ifdef GO_DEBUG
+			if (range<0 || range>=BOARD_SIZE*BOARD_SIZE)	{
+				dprintf("error in random piece: range out of index");
+				AG_PANIC(0);
 			}
-			else idx --;
+		#endif
+		int idx = rand() % range;
+		int sp_idx_sm=0, sp_idx_lg=0;
+		for( int i=0; i<SPLIT_NUM_LARGE; i++){
+			if( idx - space_split_lg[i] - reserve_split_lg[agent-1][i] < 0 )	break;
+			idx -= space_split_lg[i] - reserve_split_lg[agent-1][i];
+			sp_idx_lg ++;
+		}
+		int sp_start_sm = sp_idx_lg * SPLIT_SIZE_LARGE;
+		int sp_end_sm = sp_start_sm + SPLIT_SIZE_LARGE;
+		if (sp_end_sm > BOARD_SIZE ) sp_end_sm = BOARD_SIZE;
+		sp_idx_sm = sp_start_sm;
+		for( int i=sp_start_sm; i<sp_end_sm; i++){
+			if( idx - space_split_sm[i] - reserve_split_sm[agent-1][i] < 0 )	break;
+			idx -= space_split_sm[i] - reserve_split_sm[agent-1][i];
+			sp_idx_sm ++;
+		}
+		#ifdef GO_DEBUG
+			if (sp_idx_sm>=BOARD_SIZE){
+				dprintf("error in random piece: split index out of range");
+				AG_PANIC(0);
+			}
+		#endif
+		row = sp_idx_sm;
+		for( int j=0; j<BOARD_SIZE; j++){
+			if( data[row][j] == GO_NULL && reserve[row][j]!=agent && reserve[row][j]!=GO_BOTH ){
+				if( idx==0 ){
+					col = j;
+					break;
+				}
+				else idx --;
+			}
+		}
+		if (checkSuicide(agent,row,col) || checkTrueEye(agent,row,col)){
+			addReserve(agent,row,col);
+			flag = true;
 		}
 	}
-	return Piece(agent,sp_idx_sm,col);
+	return Piece(agent,row,col);
 }
 
+bool Board::checkSuicide(int agent, int row, int col){
+	int i = row, j = col;
+	int true_hp = 0;
+	int minus_hp = 0;
+	SetNode* s[4] = {0,0,0,0};
+	if( i-1>=0 ){
+		if( data[i-1][j]!=GO_NULL && data[i-1][j]==agent ){
+			s[0] = getSet(i-1,j);
+			minus_hp++;
+		}
+		else if( data[i-1][j]==GO_NULL ) minus_hp--;
+	}
+	if( j-1>=0 ){
+		if( data[i][j-1]!=GO_NULL && data[i][j-1]==agent ){
+			s[1] = getSet(i,j-1);
+			minus_hp++;
+		}
+		else if( data[i][j-1]==GO_NULL ) minus_hp--;
+	}
+	if( i+1<BOARD_SIZE ){
+		if( data[i+1][j]!=GO_NULL && data[i+1][j]==agent ){
+			s[2] = getSet(i+1,j);
+			minus_hp++;
+		}
+		else if( data[i+1][j]==GO_NULL ) minus_hp--;
+	}
+	if( j+1<BOARD_SIZE ){
+		if( data[i][j+1]!=GO_NULL && data[i][j+1]==agent ){
+			s[3] = getSet(i,j+1);
+			minus_hp++;
+		}
+		else if( data[i][j+1]==GO_NULL ) minus_hp--;
+	}
+	// remove repeated setnodes;
+	for( int m=0; m<3; m++){
+		if( s[m] == NULL ) continue;
+		for( int n=m+1; n<4; n++){
+			if( s[m] == s[n] ) s[n] = NULL;
+		}
+	}
+	for( int m=0; m<4; m++){
+		if( s[m]!=NULL) true_hp += s[m]->hp;
+	}
+	if( true_hp - minus_hp <=0 ) return true;
+	else{
+		return false;
+	}
+}
+
+bool Board::checkTrueEye(int agent, int row, int col){
+	int i = row, j = col;
+	if( i-1>=0 && data[i-1][j]!=agent )	return false;
+	if( j-1>=0 && data[i][j-1]!=agent )	return false;
+	if( i+1<BOARD_SIZE && data[i+1][j]!=agent )	return false;
+	if( j+1<BOARD_SIZE && data[i][j+1]!=agent )	return false;
+	int count = 0;  // count the number of the shoulders occupied by the rival
+	if( i-1>=0 && j-1>=0 && data[i-1][j-1]!=GO_NULL && data[i-1][j-1]!=agent )	count++;
+	if( i-1>=0 && j+1>=0 && data[i-1][j+1]!=GO_NULL && data[i-1][j+1]!=agent )	count++;
+	if( i+1<BOARD_SIZE && j-1>=0 && data[i+1][j-1]!=GO_NULL && data[i+1][j-1]!=agent )	count++;
+	if( i+1<BOARD_SIZE && j+1<BOARD_SIZE && data[i+1][j+1]!=GO_NULL && data[i+1][j+1]!=agent )	count++;
+	if( i==0 || i==BOARD_SIZE || j==0 || j==BOARD_SIZE ){
+		if( count>=1 ) return false;
+	}
+	else if( count>=2 ) return false;
+	return true;
+}
+
+void Board::addReserve(int agent, int row, int col){
+	int i = row, j = col;
+	int i_lg = i / SPLIT_SIZE_LARGE;
+	if( reserve[i][j]!=GO_NULL && reserve[i][j]!=agent){
+		reserve[i][j] == GO_BOTH;
+	}
+	else reserve[i][j] == agent;
+	reserve_split_sm[agent-1][i] += 1;
+	reserve_split_lg[agent-1][i_lg] += 1;
+	reserve_total[agent-1] += 1;
+}
+
+void Board::removeReserve(int row, int col){
+	#ifdef GO_DEBUG
+		if ( data[row][col] == GO_NULL ){
+			dprintf("error in removeReserve in %d %d, the position is not reserved\n", row, col);
+			AG_PANIC(0);
+		}
+	#endif
+	int i = row, j = col;
+	int i_lg = i / SPLIT_SIZE_LARGE;
+	int agent = reserve[i][j];
+	reserve[i][j] == GO_NULL;
+	if( agent!= GO_BOTH ){
+		reserve_split_sm[agent-1][i] -= 1;
+		reserve_split_lg[agent-1][i_lg] -= 1;
+		reserve_total[agent-1] -= 1;
+	}
+	else{
+		reserve_split_sm[0][i] -= 1;
+		reserve_split_sm[1][i] -= 1;
+		reserve_split_lg[0][i_lg] -= 1;
+		reserve_split_lg[1][i_lg] -= 1;
+		reserve_total[0] -= 1;
+		reserve_total[1] -= 1;
+	}
+}
 /* old ones of recursive version
 
 inline void Board::updateHp(int row, int col){
