@@ -16,6 +16,6 @@ unsigned core_count()
   GetSystemInfo(&si);
   count = si.dwNumberOfProcessors;
   #endif
-
+  // syc 
   return count;
 }
