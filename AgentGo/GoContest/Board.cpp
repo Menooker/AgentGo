@@ -310,7 +310,7 @@ Piece Board::getRandomPiece(int agent){
 		int idx = rand() % range;
 		int sp_idx_sm=0, sp_idx_lg=0;
 		for( int i=0; i<SPLIT_NUM_LARGE; i++){
-			if( idx - space_split_lg[i] - reserve_split_lg[agent-1][i] < 0 )	break;
+			if( idx - space_split_lg[i] + reserve_split_lg[agent-1][i] < 0 )	break;
 			idx -= space_split_lg[i] - reserve_split_lg[agent-1][i];
 			sp_idx_lg ++;
 		}
@@ -319,7 +319,7 @@ Piece Board::getRandomPiece(int agent){
 		if (sp_end_sm > BOARD_SIZE ) sp_end_sm = BOARD_SIZE;
 		sp_idx_sm = sp_start_sm;
 		for( int i=sp_start_sm; i<sp_end_sm; i++){
-			if( idx - space_split_sm[i] - reserve_split_sm[agent-1][i] < 0 )	break;
+			if( idx - space_split_sm[i] + reserve_split_sm[agent-1][i] < 0 )	break;
 			idx -= space_split_sm[i] - reserve_split_sm[agent-1][i];
 			sp_idx_sm ++;
 		}
@@ -418,9 +418,9 @@ void Board::addReserve(int agent, int row, int col){
 	int i = row, j = col;
 	int i_lg = i / SPLIT_SIZE_LARGE;
 	if( reserve[i][j]!=GO_NULL && reserve[i][j]!=agent){
-		reserve[i][j] == GO_BOTH;
+		reserve[i][j] = GO_BOTH;
 	}
-	else reserve[i][j] == agent;
+	else reserve[i][j] = agent;
 	reserve_split_sm[agent-1][i] += 1;
 	reserve_split_lg[agent-1][i_lg] += 1;
 	reserve_total[agent-1] += 1;
@@ -436,7 +436,7 @@ void Board::removeReserve(int row, int col){
 	int i = row, j = col;
 	int i_lg = i / SPLIT_SIZE_LARGE;
 	int agent = reserve[i][j];
-	reserve[i][j] == GO_NULL;
+	reserve[i][j] = GO_NULL;
 	if( agent!= GO_BOTH ){
 		reserve_split_sm[agent-1][i] -= 1;
 		reserve_split_lg[agent-1][i_lg] -= 1;
