@@ -37,6 +37,7 @@ void Board::clear(){
 		}
 		history_head = 0;
 	#endif
+	num_black = num_white = 0;
 	for ( i=0; i<BOARD_SIZE; i++){
 		space_split_sm[i] = BOARD_SIZE;
 	}
@@ -270,6 +271,8 @@ void Board::killSetNode(SetNode* sn){
 
 		data[i][j] = GO_NULL;
 		set_nodes[i*BOARD_SIZE+j].clear();	// this clear has also cleared the *sn itself;
+		if( agent == GO_BLACK) num_black--;
+		else num_white--;
 		space_split_sm[i] += 1;
 		int i_lg = i / SPLIT_SIZE_LARGE;
 		space_split_lg[i_lg] += 1;
@@ -313,10 +316,12 @@ Piece Board::getRandomPiece(int agent){
 	#endif
 	int col;
 	for( int j=0; j<BOARD_SIZE; j++){
-		if( data[sp_idx_sm][j] == GO_NULL )	idx --;
-		if( idx==0 ){
-			col = j;
-			break;
+		if( data[sp_idx_sm][j] == GO_NULL ){
+			if( idx==0 ){
+				col = j;
+				break;
+			}
+			else idx --;
 		}
 	}
 	return Piece(agent,sp_idx_sm,col);
