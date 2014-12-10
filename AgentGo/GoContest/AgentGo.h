@@ -1,6 +1,10 @@
 #pragma once
 // the head file of the whole library of AgentGo
  
+
+#define GO_DEBUG
+#define GO_HISTORY
+
 #define GO_NULL	     0
 #define GO_BLACK     1
 #define GO_WHITE     2
