@@ -12,7 +12,7 @@
 
 using namespace TinyMT;
 
-
+TinyOP<Board> boardpool(1000);
 class MyObject: public TObject
 {
 
@@ -27,34 +27,15 @@ public:
 	int mark[13][13];
 	MyJob(Board& old)
 	{
-		bd=new Board(old);
+		bd=boardpool.tnew(&old);//new Board(old);
 	}
 	~MyJob()
 	{
-		delete bd;
+		boardpool.tdelete(bd);
+		//delete bd;
 	}
 };
-class MyThread:public TThread
-{
-	virtual void run()
-	{
-		MyJob* mj=(MyJob*)this->job;
-		printf("Thread %d running\n",mj->i);
-		this->tsleep(100);
-		for(int i=0;i<1;i++)
-		{
 
-			osync(myobj)
-			{
-				printf("Thread %d entered\n",mj->i);
-				this->tsleep(1000);
-				break;
-			}
-			esync
-		}
-		printf("Thread %d left\n",mj->i);
-	}
-};
 
 
 
@@ -88,18 +69,7 @@ class MyGame:public GTPAdapter
 	bool onMove(int isW,int& a,int& b)
 	{
 
-		/*for(int i=0;i<10000;i++)
-		{
-			a=rand()%13;
-			b=rand()%13;
-			if(bd.data[a][b]==0)
-			{
-				dprintf("genmove a= %d ,b= %d\n",a,b);
-				return true;
-			}
-		}
-		return false;//*/
-		
+	
 		MyJob* jobs[13][13]={0};
 		Scheduler<MyWorker>* psch=new Scheduler<MyWorker>(true);
 
@@ -144,36 +114,20 @@ class MyGame:public GTPAdapter
 int _tmain(int argc, _TCHAR* argv[])
 {
 	
-	Board bd;
-	Board *bds[1000];
-	bd.put(GO_WHITE,1,2);
-	TinyOP<Board> pool(1000);
-	printf("BD :%d\n",&bd);
-	time_t ti=clock();
-	for(int i=0;i<1000;i++)
-	{
-		bds[i]=pool.tnew(&bd);
-		//bds[i]=new Board(bd);
-		//printf("%d\n",bds[i]);
-		
-		if(bds[i]->data[1][2]!=GO_WHITE)
-		{
-			printf("ERR");
-			break;
-		}
-	}
-	for(int i=0;i<1000;i++)
-	{
-		//delete bds[i];
-		pool.tdelete(bds[i]);
-	
-	}
-	printf("%d",clock()-ti);
-	system("pause");
-	/*dinitdbg();
+	dinitdbg();
+	dprintf("%d\n",sizeof(Board));
 	srand(time(0));
 	MyGame gm;
-	gm.MainLoop(); //*/
+	gm.MainLoop(); 
+	return 0;
+}
+
+
+
+
+
+//old TinyMT test
+//*/
 	/*
 	for(int cnt=0;cnt<1000;cnt++)
 	{
@@ -208,6 +162,3 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	//system("pause");
 	//ExitProcess(0);
-	return 0;
-}
-
