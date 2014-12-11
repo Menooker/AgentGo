@@ -24,8 +24,6 @@ private:
 	SetNode* getSet(int row, int col);
 	void unionSetNode(SetNode* s1, SetNode* s2);
 	void killSetNode(SetNode* sn);
-	bool checkTrueEye(int agent, int row, int col);
-	bool checkSuicide(int agent, int row, int col);
 	void addReserve(int agent, int row, int col);
 	void removeReserve(int row, int col);
 
@@ -60,6 +58,8 @@ public:
 	void print();
 	void clone(const Board &board);
 	Piece getRandomPiece(int agent);
+	bool checkTrueEye(int agent, int row, int col);
+	bool checkSuicide(int agent, int row, int col);
 	void release(); // delete the array pointers
 	
 

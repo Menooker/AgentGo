@@ -387,9 +387,10 @@ bool Board::checkSuicide(int agent, int row, int col){
 	}
 	// if any adjacent enemy node could be killed or adjacent self node could not be killed, not suicide.
 	for( int m=0; m<4; m++){
-		if( s[m]!=NULL && 
+		if( s[m]!=NULL && (
 			( enemy[m]==true && (s[m]->hp)-minus_hp[m]==0 ) ||
-			( enemy[m]==false && (s[m]->hp)-minus_hp[m]>0 ) ) return false;
+			( enemy[m]==false && (s[m]->hp)-minus_hp[m]>0 )
+			)) return false;
 	}
 	return true;
 }
