@@ -51,6 +51,7 @@ class MyWorker:public SWorker
 };
 
 
+
 class MyGame:public GTPAdapter
 {
 
@@ -69,44 +70,11 @@ class MyGame:public GTPAdapter
 	bool onMove(int isW,int& a,int& b)
 	{
 
-	
-		MyJob* jobs[13][13]={0};
-		Scheduler<MyWorker>* psch=new Scheduler<MyWorker>(true);
-
-		/////////////submit the jobs
-		for( int i=0;i<13;i++)
-		{
-			for(int j=0;j<13;j++)
-			{
-				if(bd.data[i][j]!=GO_NULL)
-					continue;
-				jobs[i][j]=new MyJob(bd);
-				jobs[i][j]->i=i;
-				jobs[i][j]->j=j;
-				psch->submit(jobs[i][j],1);
-			}
-		}
-
-		/////run the threads and wait for the work completes
-		psch->go();
-		psch->wait();
-		delete psch;
-
-		/////////////////////////////////-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-
-		
-		/////delete "jobs"
-		for( int i=0;i<13;i++)
-		{
-			for(int j=0;j<13;j++)
-			{
-				if(jobs[i][j])
-					delete jobs[i][j];
-			}
-		}
-
-		return true;//*/
+		Piece pc=bd.getRandomPiece(isW+1);
+		a=pc.row;
+		b=pc.col;
+		dprintf("genmove a= %d ,b= %d\n",a,b);
+		return !pc.isEmpty();
 	}
 
 };
