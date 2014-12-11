@@ -349,51 +349,49 @@ Piece Board::getRandomPiece(int agent){
 
 bool Board::checkSuicide(int agent, int row, int col){
 	int i = row, j = col;
-	int true_hp = 0;
-	int minus_hp = 0;
+	bool enemy[4] = {0,0,0,0};
+	int minus_hp[4] = {1,1,1,1};
 	SetNode* s[4] = {0,0,0,0};
-	if( i-1>=0 ){
-		if( data[i-1][j]!=GO_NULL && data[i-1][j]==agent ){
-			s[0] = getSet(i-1,j);
-			minus_hp++;
-		}
-		else if( data[i-1][j]==GO_NULL ) minus_hp--;
+	if(i-1>=0){
+		if( data[i-1][j]==GO_NULL )	return false;
+		if( data[i-1][j]!=agent ) enemy[0] = true;
+		s[0] = getSet(i-1,j);
+
 	}
-	if( j-1>=0 ){
-		if( data[i][j-1]!=GO_NULL && data[i][j-1]==agent ){
-			s[1] = getSet(i,j-1);
-			minus_hp++;
-		}
-		else if( data[i][j-1]==GO_NULL ) minus_hp--;
+	if(j-1>=0){
+		if( data[i][j-1]==GO_NULL )	return false;
+		if( data[i][j-1]!=agent ) enemy[1] = true;
+		s[1] = getSet(i,j-1);
 	}
-	if( i+1<BOARD_SIZE ){
-		if( data[i+1][j]!=GO_NULL && data[i+1][j]==agent ){
-			s[2] = getSet(i+1,j);
-			minus_hp++;
-		}
-		else if( data[i+1][j]==GO_NULL ) minus_hp--;
+	if(i+1<BOARD_SIZE){
+		if( data[i+1][j]==GO_NULL )	return false;
+		if( data[i+1][j]!=agent ) enemy[2] = true;
+		s[2] = getSet(i+1,j);
 	}
-	if( j+1<BOARD_SIZE ){
-		if( data[i][j+1]!=GO_NULL && data[i][j+1]==agent ){
-			s[3] = getSet(i,j+1);
-			minus_hp++;
-		}
-		else if( data[i][j+1]==GO_NULL ) minus_hp--;
+	if(j+1<BOARD_SIZE){
+		if( data[i][j+1]==GO_NULL )	return false;
+		if( data[i][j+1]!=agent ) enemy[3] = true;
+		s[3] = getSet(i,j+1);
 	}
+
+
 	// remove repeated setnodes;
 	for( int m=0; m<3; m++){
 		if( s[m] == NULL ) continue;
 		for( int n=m+1; n<4; n++){
-			if( s[m] == s[n] ) s[n] = NULL;
+			if( s[m] == s[n] ){
+				s[n] = NULL;
+				minus_hp[m] += minus_hp[n];
+			}
 		}
 	}
+	// if any adjacent enemy node could be killed or adjacent self node could not be killed, not suicide.
 	for( int m=0; m<4; m++){
-		if( s[m]!=NULL) true_hp += s[m]->hp;
+		if( s[m]!=NULL && 
+			( enemy[m]==true && (s[m]->hp)-minus_hp[m]==0 ) ||
+			( enemy[m]==false && (s[m]->hp)-minus_hp[m]>0 ) ) return false;
 	}
-	if( true_hp - minus_hp <=0 ) return true;
-	else{
-		return false;
-	}
+	return true;
 }
 
 bool Board::checkTrueEye(int agent, int row, int col){
