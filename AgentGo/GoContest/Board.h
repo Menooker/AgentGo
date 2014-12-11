@@ -26,6 +26,7 @@ private:
 	void killSetNode(SetNode* sn);
 	void addReserve(int agent, int row, int col);
 	void removeReserve(int row, int col);
+	void resetReserve();
 
 public:
 	// Variables
@@ -39,6 +40,7 @@ public:
 	int    reserve_split_sm[2][BOARD_SIZE];	// records the reserved space of every row respectively for black and white
 	int	   reserve_split_lg[2][SPLIT_NUM_LARGE];   // records the reserved space of the 0-5 and 6-11 row,not including the 12th row
 	int    reserve_total[2];	// total number of the reserved place for each
+	bool   to_reset_reserve;
 	
 
 #ifdef GO_HISTORY
