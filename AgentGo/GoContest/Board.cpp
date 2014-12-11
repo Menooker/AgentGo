@@ -48,6 +48,7 @@ void Board::clear(){
 		reserve_split_lg[0][i] = reserve_split_lg[1][i] = 0;
 	}
 	reserve_total[0] = reserve_total[1] =0;
+	to_reset_reserve = true;
 }
 
 bool Board::put(int agent,int row,int col){
@@ -65,7 +66,8 @@ bool Board::put(int agent,int row,int col){
 	#endif
 
 	data[i][j] = agent;
-	if( reserve[i][j] != GO_NULL ) removeReserve(i,j);
+	if( to_reset_reserve ) resetReserve();
+	else if( reserve[i][j] != GO_NULL ) removeReserve(i,j);
 	if( agent == GO_BLACK ) num_black++;
 	else num_white++;
 
@@ -199,6 +201,7 @@ void Board::clone(const Board &board){
 	}
 	reserve_total[0] = board.reserve_total[0];
 	reserve_total[1] = board.reserve_total[1];
+	to_reset_reserve = board.to_reset_reserve;
 }
 
 void Board::release(){
@@ -449,6 +452,25 @@ void Board::removeReserve(int row, int col){
 		reserve_total[0] -= 1;
 		reserve_total[1] -= 1;
 	}
+}
+
+void Board::resetReserve(){
+	if( reserve_total[0]>0 ) reserve_total[0] = 0;
+	else if( reserve_total[1]>0 ) reserve_total[1] = 0;
+	else return;
+	for(int i_lg=0; i_lg<SPLIT_NUM_LARGE; i_lg++){
+		if( reserve_split_lg[0][i_lg]>0 || reserve_split_lg[1][i_lg]>0 ){
+			memset(reserve[i_lg*SPLIT_SIZE_LARGE],0,sizeof(int)*BOARD_SIZE*SPLIT_SIZE_LARGE);
+		}
+	}
+	int remains = BOARD_SIZE - SPLIT_SIZE_LARGE * SPLIT_NUM_LARGE;
+	if( remains>0 ){
+		memset(reserve[SPLIT_NUM_LARGE*SPLIT_SIZE_LARGE],0,sizeof(int)*BOARD_SIZE*remains);
+	}
+	memset(reserve_split_sm[0],0,sizeof(int)*BOARD_SIZE);
+	memset(reserve_split_sm[1],0,sizeof(int)*BOARD_SIZE);
+	memset(reserve_split_lg[0],0,sizeof(int)*SPLIT_NUM_LARGE);
+	memset(reserve_split_lg[1],0,sizeof(int)*SPLIT_NUM_LARGE);
 }
 /* old ones of recursive version
 
