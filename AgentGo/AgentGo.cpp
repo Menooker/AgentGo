@@ -46,6 +46,7 @@ class MyWorker:public SWorker
 	{
 		MyJob* mj=(MyJob*)j;
 		//here////////////////////////////
+		// mark
 		//dprintf("job (%d,%d) enter\n",mj->i,mj->j);
 	}
 };
@@ -94,7 +95,7 @@ class MyGame:public GTPAdapter
 
 		/////////////////////////////////-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-
+		//find max - mark
 		
 		/////delete "jobs"
 		for( int i=0;i<13;i++)
