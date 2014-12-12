@@ -50,14 +50,26 @@ public:
 	{
 		DelEvent(mevent);
 	}
+	/*
+	wait for the event occurs.
+	*/
 	void wait()
 	{
 		WaitEvent(mevent);
 	}
+
+	/*
+	wait for the event occurs.
+	param: timeout - timeout for waiting, in milliseconds
+	*/
 	void wait(long timeout)
 	{
 		WaitEventTimeout(mevent,timeout);
 	}
+
+	/*
+	notify the event, a thread waiting for the event will be resumed.
+	*/
 	void notify()
 	{
 		NotifyEvent(mevent);
@@ -403,22 +415,36 @@ private:
 	{
 		return core_count()*2+2;
 	}
-public:
-
 	void decrease_active_num()
 	{
 		InterlockedDecrement(&num_active);
 	}
+public:
 
+
+	/*
+	wait for the threads to complete
+	*/
 	void wait()
 	{
 		ev.wait();
 	}
+
+	/*
+	wait for the threads to complete, with timeout 
+	param: millsec - timeout in milliseconds
+	*/
 	void wait(long millsec)
 	{
 		ev.wait(millsec);
 	}
 
+
+	/*
+	ask for a job from another thread(worker). Usually called by implementations of
+	Worker Threads, and you don't need to call this function
+	param: worker - the worker asking a job
+	*/
 	void askjob(T* worker)
 	{
 		/*if(only_one_worker_running())
@@ -567,8 +593,9 @@ public:
 		}
 	}
 
-	
-
+	/*
+	run the threads
+	*/
 	void go()
 	{
 		if(running)
@@ -581,6 +608,11 @@ public:
 			workers[i]->start(0);
 		}
 	}
+
+	/*
+	force the threads to end. If a job is being done, the job will 
+	not be finished.
+	*/
 	void end()
 	{
 		if(running)
@@ -594,6 +626,9 @@ public:
 		}
 	}
 
+	/*
+	abort the excution of all threads. All threads finish the current job.
+	*/
 	void abort()
 	{
 		if(running)
@@ -607,6 +642,9 @@ public:
 		}
 	}
 
+	/*
+	pause the execution of the threads 
+	*/
 	void pause()
 	{
 		//if(running)
@@ -621,7 +659,9 @@ public:
 	}
 
 
-
+	/*
+	resume the execution of the threads 
+	*/
 	void resume()
 	{
 		if(!running)
@@ -636,6 +676,11 @@ public:
 		}
 	}
 
+	/*
+	aggign a job to a specific worker
+	param: j - a pointer to the job
+		index - the index of the worker
+	*/
 	void assign(TJob* j,int index)
 	{
 		T* wk=(T*)workers[index];
@@ -643,6 +688,12 @@ public:
 		wk->push(j);
 	}
 
+
+	/*
+	submit a job, with default workload.
+	the job will be assigned by the scheduler.
+	param: j - pointer to the job
+	*/
 	void submit(TJob* j)
 	{
 		T* wk=(T*)workers[get_a_worker()];
@@ -650,6 +701,13 @@ public:
 		wk->push(j);
 
 	}
+
+	/*
+	submit a job.
+	the job will be assigned by the scheduler.
+	param: j - pointer to the job
+	load - the workload of the job
+	*/
 	void submit(TJob* j,unsigned long load)
 	{
 		T* wk=(T*)workers[get_a_worker()];
