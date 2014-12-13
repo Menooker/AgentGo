@@ -4,6 +4,7 @@
 #include "..\Config.h"
 #define GO_DEBUG
 //#define GO_HISTORY
+#define GO_TIME_STAT
 
 #define GO_NULL	     0
 #define GO_BLACK     1

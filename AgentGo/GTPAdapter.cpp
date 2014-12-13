@@ -4,6 +4,11 @@
 #include "GTPAdapter.h"
 #include "DbgPipe.h"
 
+#ifdef GO_TIME_STAT
+#include <time.h>
+#endif
+
+
 using namespace std;
 #define STR_VERSION ("0.0.1")
 #define STR_NAME ("AgentGo")
@@ -29,6 +34,9 @@ void GTPAdapter::MainLoop()
 		if(seqn(buf,"genmove ",8))
 		{
 			bool played;
+#ifdef GO_TIME_STAT
+			clock_t time0=clock();
+#endif
 			int color=tolower((int)buf[8]);
 			if(color=='w')
 			{
@@ -45,7 +53,15 @@ void GTPAdapter::MainLoop()
 			}
 			if(played)
 			{
+#ifdef GO_TIME_STAT
+				time0=clock()-time0;
+				avgtime=(avgtime*times + time0)/(times+1);
+				this->times++;
+				dprintf("genmove a= %d ,b= %d ,avgtime= %f ms\n",a,b,avgtime);
+#else
 				dprintf("genmove a= %d ,b= %d\n",a,b);
+#endif
+
 				bd.put((color=='w'?GO_WHITE:GO_BLACK),a,b);
 				cout<<"= "<<GaIntToChar(a)<<b+1<<endl<<endl;
 			}
