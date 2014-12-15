@@ -48,6 +48,7 @@ void Board::clear(){
 		reserve_split_lg[0][i] = reserve_split_lg[1][i] = 0;
 	}
 	reserve_total[0] = reserve_total[1] =0;
+	true_eyes[0] = true_eyes[1] = 0;
 	to_reset_reserve = true;
 }
 
@@ -201,7 +202,10 @@ void Board::clone(const Board &board){
 	}
 	reserve_total[0] = board.reserve_total[0];
 	reserve_total[1] = board.reserve_total[1];
+	true_eyes[0] = board.true_eyes[0];
+	true_eyes[1] = board.true_eyes[1];
 	to_reset_reserve = board.to_reset_reserve;
+
 }
 
 void Board::release(){
@@ -342,7 +346,12 @@ Piece Board::getRandomPiece(int agent){
 				else idx --;
 			}
 		}
-		if (checkSuicide(agent,row,col) || checkTrueEye(agent,row,col)){
+		if( checkSuicide(agent,row,col) ){
+			addReserve(agent,row,col);
+			flag = true;
+		}
+		else if( checkTrueEye(agent,row,col) ){
+			if(to_reset_reserve) true_eyes[agent-1] += 1;
 			addReserve(agent,row,col);
 			flag = true;
 		}
@@ -471,6 +480,7 @@ void Board::resetReserve(){
 	memset(reserve_split_sm[1],0,sizeof(int)*BOARD_SIZE);
 	memset(reserve_split_lg[0],0,sizeof(int)*SPLIT_NUM_LARGE);
 	memset(reserve_split_lg[1],0,sizeof(int)*SPLIT_NUM_LARGE);
+	if(to_reset_reserve) true_eyes[0] = true_eyes[1] = 0;
 }
 /* old ones of recursive version
 

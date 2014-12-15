@@ -2,6 +2,8 @@
 
 #include "AgentGo.h"
 
+#define PIECE_EMPTY_IDX -1
+
 struct Piece
 {
 public:

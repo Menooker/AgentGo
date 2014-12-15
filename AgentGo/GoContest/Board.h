@@ -40,6 +40,7 @@ public:
 	int    reserve_split_sm[2][BOARD_SIZE];	// records the reserved space of every row respectively for black and white
 	int	   reserve_split_lg[2][SPLIT_NUM_LARGE];   // records the reserved space of the 0-5 and 6-11 row,not including the 12th row
 	int    reserve_total[2];	// total number of the reserved place for each
+	int    true_eyes[2];
 	bool   to_reset_reserve;
 	
 
