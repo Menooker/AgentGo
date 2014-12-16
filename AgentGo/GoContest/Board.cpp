@@ -309,7 +309,7 @@ Piece Board::getRandomPiece(int agent){
 		int range = BOARD_SIZE*BOARD_SIZE - num_black - num_white - reserve_total[agent-1];
 		if (range==0) return Piece();
 		#ifdef GO_DEBUG
-			if (range<0 || range>=BOARD_SIZE*BOARD_SIZE)	{
+			if (range<0 || range>BOARD_SIZE*BOARD_SIZE)	{
 				dprintf("error in random piece: range out of index");
 				AG_PANIC(0);
 			}
