@@ -162,8 +162,8 @@ Piece Board::getPiece(int row,int col){
 
 void Board::print(){
 	int i,j;
-	for( i=0; i<BOARD_SIZE-1; i++){
-		for( j=0; j<BOARD_SIZE-1; j++){
+	for( i=0; i<BOARD_SIZE; i++){
+		for( j=0; j<BOARD_SIZE; j++){
 			dprintf("%d ",data[i][j]);
 		}
 		dprintf("\n");
@@ -200,6 +200,8 @@ void Board::clone(const Board &board){
 		reserve_split_lg[0][i] = board.reserve_split_lg[0][i];
 		reserve_split_lg[1][i] = board.reserve_split_lg[1][i];
 	}
+	num_black = board.num_black;
+	num_white = board.num_white;
 	reserve_total[0] = board.reserve_total[0];
 	reserve_total[1] = board.reserve_total[1];
 	true_eyes[0] = board.true_eyes[0];
