@@ -13,6 +13,8 @@
 using namespace TinyMT;
 
 TinyOP<Board> boardpool(1000);
+
+double total_mark[13][13];
 class MyObject: public TObject
 {
 
@@ -24,10 +26,18 @@ public:
 	Board* bd;
 	int i;
 	int j;
+	int isWh;
 	int mark[13][13];
 	MyJob(Board& old)
 	{
 		bd=boardpool.tnew(&old);//new Board(old);
+		for (int i=0;i<13;++i)
+		{
+			for (int j=0;j<13;++j)
+			{
+				mark[i][j]=0;
+			}
+		}
 	}
 	~MyJob()
 	{
@@ -45,6 +55,215 @@ class MyWorker:public SWorker
 	void work(TJob* j)
 	{
 		MyJob* mj=(MyJob*)j;
+		int num_b_1=mj->bd->num_black;
+		int num_w_1=mj->bd->num_white;
+		if (mj->isWh==1)
+		{
+			mj->bd->put(GO_WHITE,mj->i,mj->j);
+		}
+		else
+		{
+			mj->bd->put(GO_BLACK,mj->i,mj->j);
+		}
+		int num_b_2=mj->bd->num_black;
+		int num_w_2=mj->bd->num_white;
+		if (mj->isWh==1)
+		{
+			//即时利益
+			total_mark[mj->i][mj->j]+=(num_w_2-num_w_1+num_b_1-num_b_2)*10;
+			if (mj->i>=2 && mj->i<=10 && mj->j>=2 && mj->j<=10)
+			{
+				//连
+				if (mj->bd->data[mj->i][mj->j-1]==GO_WHITE)
+				{
+					total_mark[mj->i][mj->j]+=1;
+				}
+				else if (mj->bd->data[mj->i][mj->j-1]==GO_BLACK)
+				{
+					total_mark[mj->i][mj->j]-=1;
+				}
+				if (mj->bd->data[mj->i-1][mj->j]==GO_WHITE)
+				{
+					total_mark[mj->i][mj->j]+=1;
+				}
+				else if (mj->bd->data[mj->i-1][mj->j]==GO_BLACK)
+				{
+					total_mark[mj->i][mj->j]-=1;
+				}
+				if (mj->bd->data[mj->i][mj->j+1]==GO_WHITE)
+				{
+					total_mark[mj->i][mj->j]+=1;
+				}
+				else if (mj->bd->data[mj->i][mj->j+1]==GO_BLACK)
+				{
+					total_mark[mj->i][mj->j]-=1;
+				}
+				if (mj->bd->data[mj->i+1][mj->j]==GO_WHITE)
+				{
+					total_mark[mj->i][mj->j]+=1;
+				}
+				else if (mj->bd->data[mj->i+1][mj->j]==GO_BLACK)
+				{
+					total_mark[mj->i][mj->j]-=1;
+				}
+				//尖
+				if (mj->bd->data[mj->i+1][mj->j+1]==GO_WHITE)
+				{
+					total_mark[mj->i][mj->j]+=1;
+				}
+				else if (mj->bd->data[mj->i+1][mj->j+1]==GO_BLACK)
+				{
+					total_mark[mj->i][mj->j]-=1;
+				}
+				if (mj->bd->data[mj->i+1][mj->j-1]==GO_WHITE)
+				{
+					total_mark[mj->i][mj->j]+=1;
+				}
+				else if (mj->bd->data[mj->i+1][mj->j-1]==GO_BLACK)
+				{
+					total_mark[mj->i][mj->j]-=1;
+				}
+				if (mj->bd->data[mj->i-1][mj->j+1]==GO_WHITE)
+				{
+					total_mark[mj->i][mj->j]+=1;
+				}
+				else if (mj->bd->data[mj->i-1][mj->j+1]==GO_BLACK)
+				{
+					total_mark[mj->i][mj->j]-=1;
+				}
+				if (mj->bd->data[mj->i-1][mj->j-1]==GO_WHITE)
+				{
+					total_mark[mj->i][mj->j]+=1;
+				}
+				else if (mj->bd->data[mj->i-1][mj->j-1]==GO_BLACK)
+				{
+					total_mark[mj->i][mj->j]-=1;
+				}
+				//飞
+				if (mj->bd->data[mj->i-1][mj->j+2]==GO_WHITE)
+				{
+					total_mark[mj->i][mj->j]+=1;
+				}
+				else if (mj->bd->data[mj->i-1][mj->j+2]==GO_BLACK)
+				{
+					total_mark[mj->i][mj->j]-=1;
+				}
+				if (mj->bd->data[mj->i+1][mj->j-2]==GO_WHITE)
+				{
+					total_mark[mj->i][mj->j]+=1;
+				}
+				else if (mj->bd->data[mj->i+1][mj->j-2]==GO_BLACK)
+				{
+					total_mark[mj->i][mj->j]-=1;
+				}
+				if (mj->bd->data[mj->i-1][mj->j-2]==GO_WHITE)
+				{
+					total_mark[mj->i][mj->j]+=1;
+				}
+				else if (mj->bd->data[mj->i-1][mj->j-2]==GO_BLACK)
+				{
+					total_mark[mj->i][mj->j]-=1;
+				}
+				if (mj->bd->data[mj->i-2][mj->j-1]==GO_WHITE)
+				{
+					total_mark[mj->i][mj->j]+=1;
+				}
+				else if (mj->bd->data[mj->i-2][mj->j-1]==GO_BLACK)
+				{
+					total_mark[mj->i][mj->j]-=1;
+				}
+				if (mj->bd->data[mj->i+1][mj->j+2]==GO_WHITE)
+				{
+					total_mark[mj->i][mj->j]+=1;
+				}
+				else if (mj->bd->data[mj->i+1][mj->j+2]==GO_BLACK)
+				{
+					total_mark[mj->i][mj->j]-=1;
+				}
+				if (mj->bd->data[mj->i+2][mj->j+1]==GO_WHITE)
+				{
+					total_mark[mj->i][mj->j]+=1;
+				}
+				else if (mj->bd->data[mj->i+2][mj->j+1]==GO_BLACK)
+				{
+					total_mark[mj->i][mj->j]-=1;
+				}
+				if (mj->bd->data[mj->i+1][mj->j-2]==GO_WHITE)
+				{
+					total_mark[mj->i][mj->j]+=1;
+				}
+				else if (mj->bd->data[mj->i+1][mj->j-2]==GO_BLACK)
+				{
+					total_mark[mj->i][mj->j]-=1;
+				}
+				if (mj->bd->data[mj->i+2][mj->j-1]==GO_WHITE)
+				{
+					total_mark[mj->i][mj->j]+=1;
+				}
+				else if (mj->bd->data[mj->i+2][mj->j-1]==GO_BLACK)
+				{
+					total_mark[mj->i][mj->j]-=1;
+				}
+			}
+			else if (mj->i==0 && mj->i==12 && mj->j==0 && mj->j==12)
+			{
+				
+			}
+			else
+			{
+
+			}
+			
+		}
+		else
+		{
+			total_mark[mj->i][mj->j]+=(num_b_2-num_b_1+num_w_1-num_w_2)*10;
+		}
+		bool white_go=1;
+		bool black_go=1;
+		if (mj->isWh==1)
+		{
+			int cstep=0;
+			while (white_go || black_go)
+			{
+				Piece rand;
+				rand=mj->bd->getRandomPiece(GO_BLACK);
+				if (!rand.isEmpty())
+				{
+					mj->bd->put(rand);//hei fang xia
+					black_go=1;
+				}
+				else
+				{
+					black_go=0;
+				}
+				rand=mj->bd->getRandomPiece(1);
+				if (!rand.isEmpty())
+				{
+					mj->bd->put(rand);//bai fang xia
+					cstep++;
+					white_go=1;
+					mj->mark[rand.row][rand.col]=cstep;
+				}
+				else
+				{
+					white_go=0;
+				}
+			}
+			int white_win=mj->bd->num_white-mj->bd->num_black;
+
+			for (int i=0;i<13;++i)
+			{
+				for (int j=0;j<13;++j)
+				{
+					total_mark[i][j]+=(100/mj->mark[i][j])*white_win;
+				}
+			}
+		}
+		else
+		{
+			mj->bd->put(GO_BLACK,mj->i,mj->j);
+		}
 		//here////////////////////////////
 		//dprintf("job (%d,%d) enter\n",mj->i,mj->j);
 	}
@@ -53,10 +272,10 @@ class MyWorker:public SWorker
 
 class MyGame:public GTPAdapter
 {
-
+	int step;
 	void onClear()
 	{
-		
+		step=0;
 	}
 	void onBoardSize(int sz)
 	{
@@ -68,45 +287,178 @@ class MyGame:public GTPAdapter
 	}
 	bool onMove(int isW,int& a,int& b)
 	{
-
-	
-		MyJob* jobs[13][13]={0};
-		Scheduler<MyWorker>* psch=new Scheduler<MyWorker>(true);
-
-		/////////////submit the jobs
-		for( int i=0;i<13;i++)
+		int tmp=0;
+		step+=1;
+		memset(total_mark,0,sizeof(total_mark));
+		if (step>=1 && step<=4)
 		{
-			for(int j=0;j<13;j++)
+			int takereg[9]={0};
+			if (isW==1)
 			{
-				if(bd.data[i][j]!=GO_NULL)
-					continue;
-				jobs[i][j]=new MyJob(bd);
-				jobs[i][j]->i=i;
-				jobs[i][j]->j=j;
-				psch->submit(jobs[i][j],1);
+				int i,j;
+				for (i=0;i<4;++i)
+				{
+					for (j=0;j<4;++j)
+					{
+						if (bd.data[i][j]==GO_BLACK)
+							takereg[0]=1;
+					}
+					for (j=4;j<9;++j)
+					{
+						if (bd.data[i][j]==GO_BLACK)
+							takereg[1]=1;
+					}
+					for (j=9;j<13;++j)
+					{
+						if (bd.data[i][j]==GO_BLACK)
+							takereg[2]=1;
+					}
+				}
+				for (i=4;i<9;++i)
+				{
+					for (j=0;j<4;++j)
+					{
+						if (bd.data[i][j]==GO_BLACK)
+							takereg[3]=1;
+					}
+					for (j=4;j<9;++j)
+					{
+						if (bd.data[i][j]==GO_BLACK)
+							takereg[4]=1;
+					}
+					for (j=9;j<13;++j)
+					{
+						if (bd.data[i][j]==GO_BLACK)
+							takereg[5]=1;
+					}
+				}
+				for (i=9;i<13;++i)
+				{
+					for (j=0;j<4;++j)
+					{
+						if (bd.data[i][j]==GO_BLACK)
+							takereg[6]=1;
+					}
+					for (j=4;j<9;++j)
+					{
+						if (bd.data[i][j]==GO_BLACK)
+							takereg[7]=1;
+					}
+					for (j=9;j<13;++j)
+					{
+						if (bd.data[i][j]==GO_BLACK)
+							takereg[8]=1;
+					}
+				}
+				if (takereg[0]==0)
+				{
+					a=2;
+					b=2;
+				}
+				else if (takereg[8]==0)
+				{
+					a=10;
+					b=10;
+				}
+				else if (takereg[2]==0)
+				{
+					a=2;
+					b=10;
+				}
+				else if (takereg[6]==0)
+				{
+					a=10;
+					b=2;
+				}
+				else if (takereg[1]==0)
+				{
+					a=3;
+					b=5;
+				}
+				else if (takereg[7]==0)
+				{
+					a=9;
+					b=7;
+				}
+				else if (takereg[3]==0)
+				{
+					a=7;
+					b=3;
+				}
+				else if (takereg[5]==0)
+				{
+					a=5;
+					b=9;
+				}
+				else
+				{
+					a=6;
+					b=6;
+				}
 			}
+			else
+			{
+
+			}
+			return true;
 		}
+		else if (step>4)
+		{
 
-		/////run the threads and wait for the work completes
-		psch->go();
-		psch->wait();
-		delete psch;
+			MyJob* jobs[13][13]={0};
+			Scheduler<MyWorker>* psch=new Scheduler<MyWorker>(true);
 
-		/////////////////////////////////-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+			/////////////submit the jobs
+			for( int i=0;i<13;i++)
+			{
+				for(int j=0;j<13;j++)
+				{
+					if(bd.data[i][j]!=GO_NULL)
+						continue;
+					jobs[i][j]=new MyJob(bd);
+					jobs[i][j]->i=i;
+					jobs[i][j]->j=j;
+					jobs[i][j]->isWh=isW;
+					psch->submit(jobs[i][j],1);
+				}
+			}
 
-
+			/////run the threads and wait for the work completes
+			psch->go();
+			psch->wait();
+			delete psch;
 		
-		/////delete "jobs"
-		for( int i=0;i<13;i++)
-		{
-			for(int j=0;j<13;j++)
+			/////delete "jobs"
+			for( int i=0;i<13;i++)
 			{
-				if(jobs[i][j])
-					delete jobs[i][j];
+				for(int j=0;j<13;j++)
+				{
+					if(jobs[i][j])
+						delete jobs[i][j];
+				}
 			}
+			tmp=0;
+			int tmp_i;
+			int tmp_j;
+			for (int i=0;i<13;++i)
+			{
+				for (int j=0;j<13;++j)
+				{
+					if (total_mark[i][j]>tmp)
+					{
+						tmp=total_mark[i][j];
+						tmp_i=i;
+						tmp_j=j;
+					}
+				}
+			}
+			a=tmp_i;
+			b-tmp_j;
 		}
-
-		return true;//*/
+		if (tmp>0)
+			return true;
+		else
+			return false;
 	}
 
 };
