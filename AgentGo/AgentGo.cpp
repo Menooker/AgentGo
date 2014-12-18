@@ -228,8 +228,8 @@ class MyWorker:public SWorker
 			while (white_go || black_go)
 			{
 				Piece rand;
-				mj->bd->print();
-				AG_PANIC();
+				//mj->bd->print();
+				//AG_PANIC();
 				rand=mj->bd->getRandomPiece(GO_BLACK);
 				if (!rand.isEmpty())
 				{
@@ -239,6 +239,7 @@ class MyWorker:public SWorker
 				else
 				{
 					black_go=0;
+					mj->bd->pass(GO_BLACK);
 				}
 				rand=mj->bd->getRandomPiece(GO_WHITE);
 				if (!rand.isEmpty())
@@ -251,6 +252,7 @@ class MyWorker:public SWorker
 				else
 				{
 					white_go=0;
+					mj->bd->pass(GO_WHITE);
 				}
 			}
 			int white_win=mj->bd->num_white-mj->bd->num_black;
@@ -259,7 +261,11 @@ class MyWorker:public SWorker
 			{
 				for (int j=0;j<13;++j)
 				{
-					total_mark[i][j]+=(100/mj->mark[i][j])*white_win;
+					if (mj->mark[i][j]!=0)
+					{
+						total_mark[i][j]+=(100/mj->mark[i][j])*white_win;
+					}
+
 				}
 			}
 		}
@@ -402,7 +408,7 @@ class MyGame:public GTPAdapter
 		{
 
 			MyJob* jobs[13][13]={0};
-			Scheduler<MyWorker>* psch=new Scheduler<MyWorker>(1,true);
+			Scheduler<MyWorker>* psch=new Scheduler<MyWorker>(true);
 
 			/////////////submit the jobs
 			for( int i=0;i<13;i++)
@@ -449,7 +455,7 @@ class MyGame:public GTPAdapter
 				}
 			}
 			a=tmp_i;
-			b-tmp_j;
+			b=tmp_j;
 		}
 		if (tmp>0)
 			return true;
