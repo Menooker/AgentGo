@@ -30,7 +30,8 @@ public:
 	int mark[13][13];
 	MyJob(Board& old)
 	{
-		bd=boardpool.tnew(&old);//new Board(old);
+		//bd=boardpool.tnew(&old);
+		bd=new Board(old);
 		for (int i=0;i<13;++i)
 		{
 			for (int j=0;j<13;++j)
@@ -41,8 +42,8 @@ public:
 	}
 	~MyJob()
 	{
-		boardpool.tdelete(bd);
-		//delete bd;
+		//boardpool.tdelete(bd);
+		delete bd;
 	}
 };
 
@@ -227,6 +228,8 @@ class MyWorker:public SWorker
 			while (white_go || black_go)
 			{
 				Piece rand;
+				mj->bd->print();
+				AG_PANIC();
 				rand=mj->bd->getRandomPiece(GO_BLACK);
 				if (!rand.isEmpty())
 				{
@@ -237,7 +240,7 @@ class MyWorker:public SWorker
 				{
 					black_go=0;
 				}
-				rand=mj->bd->getRandomPiece(1);
+				rand=mj->bd->getRandomPiece(GO_WHITE);
 				if (!rand.isEmpty())
 				{
 					mj->bd->put(rand);//bai fang xia
@@ -287,36 +290,28 @@ class MyGame:public GTPAdapter
 	}
 	bool onMove(int isW,int& a,int& b)
 	{
-		for (int i=0;i<13;++i)
-		{
-			for (int j=0;j<13;++j)
-			{
-				total_mark[i][j]=0;
-			}
-		}
 		int tmp=0;
 		step+=1;
-		memset(total_mark,0,sizeof(total_mark));
+		memset(total_mark,0,sizeof(double)*13*13);
 		if (step>=1 && step<=4)
 		{
 			int takereg[9]={0};
-			int opp=(2-isW);
 				int i,j;
 				for (i=0;i<4;++i)
 				{
 					for (j=0;j<4;++j)
 					{
-						if (bd.data[i][j]==opp)
+						if (bd.data[i][j]!=0)
 							takereg[0]=1;
 					}
 					for (j=4;j<9;++j)
 					{
-						if (bd.data[i][j]==opp)
+						if (bd.data[i][j]!=0)
 							takereg[1]=1;
 					}
 					for (j=9;j<13;++j)
 					{
-						if (bd.data[i][j]==opp)
+						if (bd.data[i][j]!=0)
 							takereg[2]=1;
 					}
 				}
@@ -324,17 +319,17 @@ class MyGame:public GTPAdapter
 				{
 					for (j=0;j<4;++j)
 					{
-						if (bd.data[i][j]==opp)
+						if (bd.data[i][j]!=0)
 							takereg[3]=1;
 					}
 					for (j=4;j<9;++j)
 					{
-						if (bd.data[i][j]==opp)
+						if (bd.data[i][j]!=0)
 							takereg[4]=1;
 					}
 					for (j=9;j<13;++j)
 					{
-						if (bd.data[i][j]==opp)
+						if (bd.data[i][j]!=0)
 							takereg[5]=1;
 					}
 				}
@@ -342,17 +337,17 @@ class MyGame:public GTPAdapter
 				{
 					for (j=0;j<4;++j)
 					{
-						if (bd.data[i][j]==opp)
+						if (bd.data[i][j]!=0)
 							takereg[6]=1;
 					}
 					for (j=4;j<9;++j)
 					{
-						if (bd.data[i][j]==opp)
+						if (bd.data[i][j]!=0)
 							takereg[7]=1;
 					}
 					for (j=9;j<13;++j)
 					{
-						if (bd.data[i][j]==opp)
+						if (bd.data[i][j]!=0)
 							takereg[8]=1;
 					}
 				}
@@ -407,7 +402,7 @@ class MyGame:public GTPAdapter
 		{
 
 			MyJob* jobs[13][13]={0};
-			Scheduler<MyWorker>* psch=new Scheduler<MyWorker>(true);
+			Scheduler<MyWorker>* psch=new Scheduler<MyWorker>(1,true);
 
 			/////////////submit the jobs
 			for( int i=0;i<13;i++)
