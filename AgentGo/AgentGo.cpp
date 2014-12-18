@@ -287,30 +287,36 @@ class MyGame:public GTPAdapter
 	}
 	bool onMove(int isW,int& a,int& b)
 	{
+		for (int i=0;i<13;++i)
+		{
+			for (int j=0;j<13;++j)
+			{
+				total_mark[i][j]=0;
+			}
+		}
 		int tmp=0;
 		step+=1;
 		memset(total_mark,0,sizeof(total_mark));
 		if (step>=1 && step<=4)
 		{
 			int takereg[9]={0};
-			if (isW==1)
-			{
+			int opp=(2-isW);
 				int i,j;
 				for (i=0;i<4;++i)
 				{
 					for (j=0;j<4;++j)
 					{
-						if (bd.data[i][j]==GO_BLACK)
+						if (bd.data[i][j]==opp)
 							takereg[0]=1;
 					}
 					for (j=4;j<9;++j)
 					{
-						if (bd.data[i][j]==GO_BLACK)
+						if (bd.data[i][j]==opp)
 							takereg[1]=1;
 					}
 					for (j=9;j<13;++j)
 					{
-						if (bd.data[i][j]==GO_BLACK)
+						if (bd.data[i][j]==opp)
 							takereg[2]=1;
 					}
 				}
@@ -318,17 +324,17 @@ class MyGame:public GTPAdapter
 				{
 					for (j=0;j<4;++j)
 					{
-						if (bd.data[i][j]==GO_BLACK)
+						if (bd.data[i][j]==opp)
 							takereg[3]=1;
 					}
 					for (j=4;j<9;++j)
 					{
-						if (bd.data[i][j]==GO_BLACK)
+						if (bd.data[i][j]==opp)
 							takereg[4]=1;
 					}
 					for (j=9;j<13;++j)
 					{
-						if (bd.data[i][j]==GO_BLACK)
+						if (bd.data[i][j]==opp)
 							takereg[5]=1;
 					}
 				}
@@ -336,17 +342,17 @@ class MyGame:public GTPAdapter
 				{
 					for (j=0;j<4;++j)
 					{
-						if (bd.data[i][j]==GO_BLACK)
+						if (bd.data[i][j]==opp)
 							takereg[6]=1;
 					}
 					for (j=4;j<9;++j)
 					{
-						if (bd.data[i][j]==GO_BLACK)
+						if (bd.data[i][j]==opp)
 							takereg[7]=1;
 					}
 					for (j=9;j<13;++j)
 					{
-						if (bd.data[i][j]==GO_BLACK)
+						if (bd.data[i][j]==opp)
 							takereg[8]=1;
 					}
 				}
@@ -395,11 +401,6 @@ class MyGame:public GTPAdapter
 					a=6;
 					b=6;
 				}
-			}
-			else
-			{
-
-			}
 			return true;
 		}
 		else if (step>4)
