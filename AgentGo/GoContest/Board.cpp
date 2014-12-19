@@ -336,6 +336,29 @@ void Board::killSetNode(SetNode* sn){
 
 Piece Board::getRandomPiece(int agent){
 	int row, col;
+	if( num_black + num_white + RANDOM_INCREMENT > BOARD_SIZE*BOARD_SIZE*RANDOM_THRESHOLD ){
+		return getRandomPieceComplex(agent);
+	}
+	bool flag = true;
+	while(true){
+		flag = false;
+		int idx = rand() % (BOARD_SIZE*BOARD_SIZE);
+		row = idx / BOARD_SIZE;
+		col = idx % BOARD_SIZE;
+		if( data[row][col]!=GO_NULL || 
+			checkTrueEye(agent,row,col) || 
+			checkSuicide(agent,row,col) ||
+			(exist_compete && row==compete[1] && col==compete[2] && agent==compete[0]))
+		{
+			flag = true;
+		}
+	}
+	return Piece(agent,row,col);
+}
+
+Piece Board::getRandomPieceComplex(int agent)
+{
+	int row, col;
 	bool flag = true;
 	while(flag){
 		flag = false;
