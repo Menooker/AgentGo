@@ -113,12 +113,41 @@ class MyGame:public GTPAdapter
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	
-	dinitdbg();
-	dprintf("%d\n",sizeof(Board));
-	srand(time(0));
-	MyGame gm;
-	gm.MainLoop(); 
+	int white_go=1,black_go;
+	Board bod;
+	Board* bd=&bod;
+	for(int xx=0;xx<100
+			int cstep=0;
+			while (white_go || black_go)
+			{
+				Piece rand;
+				//mj->bd->print();
+				//AG_PANIC();
+				rand=mj->bd->getRandomPiece(GO_BLACK);
+				if (!rand.isEmpty())
+				{
+					mj->bd->put(rand);//hei fang xia
+					black_go=1;
+				}
+				else
+				{
+					black_go=0;
+					mj->bd->pass(GO_BLACK);
+				}
+				rand=mj->bd->getRandomPiece(GO_WHITE);
+				if (!rand.isEmpty())
+				{
+					mj->bd->put(rand);//bai fang xia
+					cstep++;
+					white_go=1;
+					mj->mark[rand.row][rand.col]=cstep;
+				}
+				else
+				{
+					white_go=0;
+					mj->bd->pass(GO_WHITE);
+				}
+			}
 	return 0;
 }
 
