@@ -12,6 +12,9 @@
 #define SPLIT_SIZE_LARGE	6	// numbers of rows in a space_split_lg;
 #define SPLIT_NUM_LARGE     ( BOARD_SIZE / SPLIT_SIZE_LARGE )	// length of space_split_lg;
 
+#define RANDOM_INCREMENT    20  // the compensation for occupied places (reserve) when checking random threshold    
+#define RANDOM_THRESHOLD    0.85
+
 using namespace std;
 
 class Board
@@ -63,6 +66,7 @@ public:
 	void print();
 	void clone(const Board &board);
 	Piece getRandomPiece(int agent);
+	Piece getRandomPieceComplex(int agent);
 	bool checkTrueEye(int agent, int row, int col);
 	bool checkSuicide(int agent, int row, int col);
 	void release(); // delete the array pointers
