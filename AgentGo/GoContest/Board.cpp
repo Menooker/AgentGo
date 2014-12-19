@@ -340,15 +340,16 @@ Piece Board::getRandomPiece(int agent){
 		return getRandomPieceComplex(agent);
 	}
 	bool flag = true;
-	while(true){
+	while(flag){
 		flag = false;
 		int idx = rand() % (BOARD_SIZE*BOARD_SIZE);
 		row = idx / BOARD_SIZE;
 		col = idx % BOARD_SIZE;
-		if( data[row][col]!=GO_NULL || 
-			checkTrueEye(agent,row,col) || 
-			checkSuicide(agent,row,col) ||
-			(exist_compete && row==compete[1] && col==compete[2] && agent==compete[0]))
+		if( data[row][col]!=GO_NULL
+			|| checkTrueEye(agent,row,col)
+			|| checkSuicide(agent,row,col)
+			|| (exist_compete && row==compete[1] && col==compete[2] && agent==compete[0])
+		)
 		{
 			flag = true;
 		}
