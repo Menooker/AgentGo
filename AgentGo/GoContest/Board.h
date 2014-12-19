@@ -31,6 +31,7 @@ private:
 public:
 	// Variables
 	int	   data[BOARD_SIZE][BOARD_SIZE];
+
 	int    num_black;
 	int    num_white;
 	int    space_split_sm[BOARD_SIZE];	// records the space of every row
@@ -41,8 +42,6 @@ public:
 	int    reserve_total[2];	// total number of the reserved place for each
 	int    true_eyes[2];
 	bool   to_reset_reserve;
-	bool   exist_compete;
-	int    compete[3];	// agent, row, col, agent is the one who has just been killed i.e. the one who could not put in this place
 	
 
 #ifdef GO_HISTORY
@@ -58,7 +57,6 @@ public:
 	void clear();	// delete all the pieces
 	bool put(int agent,int row,int col);
 	bool put(const Piece &piece);
-	void pass(int agent);
 	Piece getPiece(int row,int col);
 	void print();
 	void clone(const Board &board);

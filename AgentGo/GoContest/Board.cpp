@@ -50,9 +50,6 @@ void Board::clear(){
 	reserve_total[0] = reserve_total[1] =0;
 	true_eyes[0] = true_eyes[1] = 0;
 	to_reset_reserve = true;
-	exist_compete = false;
-	compete[0] = GO_NULL;
-	compete[1] = compete[2] = -1;
 }
 
 bool Board::put(int agent,int row,int col){
@@ -74,7 +71,6 @@ bool Board::put(int agent,int row,int col){
 	else if( reserve[i][j] != GO_NULL ) removeReserve(i,j);
 	if( agent == GO_BLACK ) num_black++;
 	else num_white++;
-	exist_compete = false;
 
 	// append to the history list
 	#ifdef GO_HISTORY
@@ -89,7 +85,7 @@ bool Board::put(int agent,int row,int col){
 	// refresh the splits
 	space_split_sm[i] -= 1;
 	int i_lg = i / SPLIT_SIZE_LARGE;
-	if(i_lg<SPLIT_NUM_LARGE) space_split_lg[i_lg] -= 1;
+	space_split_lg[i_lg] -= 1;
 
 	// calculating the hp of the new piece before calculating the sorroundings 
 	// in case that if some pieces killed, hp will be added more than twice. 
@@ -138,17 +134,7 @@ bool Board::put(int agent,int row,int col){
 	SetNode* snself = getSet(i,j);
 	snself->hp += hp;
 	if( snself->hp == 0 ) killSetNode(snself);
-	/*
-	int white = 0;
-	int black = 0;
-	for (int m = 0;m<BOARD_SIZE;m++){
-		for (int n = 0;n<BOARD_SIZE;n++){
-			if(data[m][n]==2) white ++;
-			if(data[m][n]==1) black++;
-		}
-	}
-	dprintf("white:%d black:%d num_white:%d num_black:%d\n",white,black,num_white,num_black);
-	*/
+
 	/* old one with recursive
 	updateHp(row,col);
 	if ( i-1>=0 && data[i-1][j]!=agent && data[i-1][j]!=GO_NULL)	updateHp( i-1, j );
@@ -172,10 +158,6 @@ Piece Board::getPiece(int row,int col){
 		}
 	#endif
 	return Piece(data[row][col],row,col);
-}
-
-void Board::pass(int agent){
-	exist_compete = false;
 }
 
 void Board::print(){
@@ -225,10 +207,6 @@ void Board::clone(const Board &board){
 	true_eyes[0] = board.true_eyes[0];
 	true_eyes[1] = board.true_eyes[1];
 	to_reset_reserve = board.to_reset_reserve;
-	exist_compete = board.exist_compete;
-	compete[0] = board.compete[0];
-	compete[1] = board.compete[1];
-	compete[2] = board.compete[2];
 
 }
 
@@ -304,8 +282,6 @@ void Board::unionSetNode(SetNode* s1, SetNode* s2){
 
 void Board::killSetNode(SetNode* sn){
 	list<Piece>pieces = *(sn->pieces);
-	bool kill_single = false;
-	if( pieces.size() == 1 ) kill_single = true;
 	list<Piece>::iterator itr=(sn->pieces)->begin();
 	list<Piece>::iterator it;
 	for( it=pieces.begin(); it!=pieces.end(); it++ ){
@@ -318,19 +294,12 @@ void Board::killSetNode(SetNode* sn){
 		else num_white--;
 		space_split_sm[i] += 1;
 		int i_lg = i / SPLIT_SIZE_LARGE;
-		if(i_lg<SPLIT_NUM_LARGE) space_split_lg[i_lg] += 1;
+		space_split_lg[i_lg] += 1;
 
 		if ( i-1>=0 && data[i-1][j]!=GO_NULL && data[i-1][j]!=agent)	( getSet(i-1,j)->hp ) ++;
 		if ( j-1>=0 && data[i][j-1]!=GO_NULL && data[i][j-1]!=agent)	( getSet(i,j-1)->hp ) ++;
 		if ( i+1<BOARD_SIZE && data[i+1][j]!=GO_NULL && data[i+1][j]!=agent)	( getSet(i+1,j)->hp ) ++;
 		if ( j+1<BOARD_SIZE && data[i][j+1]!=GO_NULL && data[i][j+1]!=agent)	( getSet(i,j+1)->hp ) ++;
-		
-		if( kill_single == true ){
-			exist_compete = true;
-			compete[0] = agent;
-			compete[1] = i;
-			compete[2] = j;
-		}
 	}
 }
 
@@ -385,10 +354,6 @@ Piece Board::getRandomPiece(int agent){
 		}
 		else if( checkTrueEye(agent,row,col) ){
 			if(to_reset_reserve) true_eyes[agent-1] += 1;
-			addReserve(agent,row,col);
-			flag = true;
-		}
-		else if( exist_compete && row==compete[1] && col==compete[2] && agent==compete[0]){
 			addReserve(agent,row,col);
 			flag = true;
 		}
@@ -455,7 +420,7 @@ bool Board::checkTrueEye(int agent, int row, int col){
 	if( i-1>=0 && j+1>=0 && data[i-1][j+1]!=GO_NULL && data[i-1][j+1]!=agent )	count++;
 	if( i+1<BOARD_SIZE && j-1>=0 && data[i+1][j-1]!=GO_NULL && data[i+1][j-1]!=agent )	count++;
 	if( i+1<BOARD_SIZE && j+1<BOARD_SIZE && data[i+1][j+1]!=GO_NULL && data[i+1][j+1]!=agent )	count++;
-	if( i==0 || i==BOARD_SIZE-1 || j==0 || j==BOARD_SIZE-1 ){
+	if( i==0 || i==BOARD_SIZE || j==0 || j==BOARD_SIZE ){
 		if( count>=1 ) return false;
 	}
 	else if( count>=2 ) return false;
@@ -470,7 +435,7 @@ void Board::addReserve(int agent, int row, int col){
 	}
 	else reserve[i][j] = agent;
 	reserve_split_sm[agent-1][i] += 1;
-	if(i_lg<SPLIT_NUM_LARGE) reserve_split_lg[agent-1][i_lg] += 1;
+	reserve_split_lg[agent-1][i_lg] += 1;
 	reserve_total[agent-1] += 1;
 }
 
@@ -487,23 +452,22 @@ void Board::removeReserve(int row, int col){
 	reserve[i][j] = GO_NULL;
 	if( agent!= GO_BOTH ){
 		reserve_split_sm[agent-1][i] -= 1;
-		if(i_lg<SPLIT_NUM_LARGE) reserve_split_lg[agent-1][i_lg] -= 1;
+		reserve_split_lg[agent-1][i_lg] -= 1;
 		reserve_total[agent-1] -= 1;
 	}
 	else{
 		reserve_split_sm[0][i] -= 1;
 		reserve_split_sm[1][i] -= 1;
-		if(i_lg<SPLIT_NUM_LARGE){
-			reserve_split_lg[0][i_lg] -= 1;
-			reserve_split_lg[1][i_lg] -= 1;
-		}
+		reserve_split_lg[0][i_lg] -= 1;
+		reserve_split_lg[1][i_lg] -= 1;
 		reserve_total[0] -= 1;
 		reserve_total[1] -= 1;
 	}
 }
 
 void Board::resetReserve(){
-	if( reserve_total[0]>0 || reserve_total[1]>0 ) reserve_total[0] = reserve_total[1] = 0;
+	if( reserve_total[0]>0 ) reserve_total[0] = 0;
+	else if( reserve_total[1]>0 ) reserve_total[1] = 0;
 	else return;
 	for(int i_lg=0; i_lg<SPLIT_NUM_LARGE; i_lg++){
 		if( reserve_split_lg[0][i_lg]>0 || reserve_split_lg[1][i_lg]>0 ){
