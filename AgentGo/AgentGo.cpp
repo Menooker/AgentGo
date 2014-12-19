@@ -117,7 +117,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	
 	clock_t cl=clock();
-	for(int xx=0;xx<200;xx++)
+	for(int xx=0;xx<70;xx++)
 	{
 			int white_go=1,black_go=1;
 			Board* bd=new Board();
