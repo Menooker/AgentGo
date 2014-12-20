@@ -4,16 +4,16 @@
 #include "Piece.h"
 #include "SetNode.h"
 #include <memory.h>
+#include <time.h>
 #include <stack>
-#include <list>
-#include <random>
 
 #define MAX_HISTORY_LENGTH	1000
 #define SPLIT_SIZE_LARGE	6	// numbers of rows in a space_split_lg;
 #define SPLIT_NUM_LARGE     ( BOARD_SIZE / SPLIT_SIZE_LARGE )	// length of space_split_lg;
 
-#define RANDOM_INCREMENT    20  // the compensation for occupied places (reserve) when checking random threshold    
-#define RANDOM_THRESHOLD    0.85
+#define RANDOM_INCREMENT    25  // the compensation for occupied places (reserve) when checking random threshold    
+#define RANDOM_THRESHOLD    0.9
+#define SPACE_HEAD_NULL		(-1)
 
 using namespace std;
 
@@ -22,31 +22,37 @@ class Board
 private:
 	// Variables
 	SetNode set_nodes[BOARD_SIZE*BOARD_SIZE];
-	
+	SetNode* stack[BOARD_SIZE*BOARD_SIZE];
+	int stack_size;
+
 	// Functions
-	SetNode* getSet(int row, int col);
+	inline SetNode* getSet(int row, int col);
 	void unionSetNode(SetNode* s1, SetNode* s2);
 	void killSetNode(SetNode* sn);
-	void addReserve(int agent, int row, int col);
-	void removeReserve(int row, int col);
-	void resetReserve();
+	inline void addReserve(int agent, int row, int col);
+	inline void resetReserve();
 
 public:
 	// Variables
 	int	   data[BOARD_SIZE][BOARD_SIZE];
 	int    num_black;
 	int    num_white;
-	int    space_split_sm[BOARD_SIZE];	// records the space of every row
-	int	   space_split_lg[SPLIT_NUM_LARGE];   // records the space of the 0-5 and 6-11 row,not including the 12th row
-	int    reserve[BOARD_SIZE][BOARD_SIZE];
-	int    reserve_split_sm[2][BOARD_SIZE];	// records the reserved space of every row respectively for black and white
-	int	   reserve_split_lg[2][SPLIT_NUM_LARGE];   // records the reserved space of the 0-5 and 6-11 row,not including the 12th row
-	int    reserve_total[2];	// total number of the reserved place for each
+	int    space_head;
+	int    space_list[BOARD_SIZE*BOARD_SIZE][2];
+	bool   reserve[BOARD_SIZE*BOARD_SIZE];
+	int    reserve_total;	// total number of the reserved place for each
 	int    true_eyes[2];
-	bool   to_reset_reserve;
 	bool   exist_compete;
 	int    compete[3];	// agent, row, col, agent is the one who has just been killed i.e. the one who could not put in this place
-	
+
+
+#ifdef GO_BOARD_TIME
+	long   time_put;
+	long   time_kill;
+	long   time_random1;
+	long   time_random2;
+	long   time_getset;
+#endif
 
 #ifdef GO_HISTORY
 	Piece  history[MAX_HISTORY_LENGTH]; // pointers point to the head piece in data
@@ -71,16 +77,5 @@ public:
 	bool checkSuicide(int agent, int row, int col);
 	void release(); // delete the array pointers
 	
-
-	/* old ones
-	int** rcsv_flags;	// the matrix used to mark points when runing DFS recursive functions and calculate hp
-	int   hp_map[BOARD_SIZE][BOARD_SIZE];
-	
-	void initRcsvFlags();
-	inline void updateHp(int row, int col);
-	inline void updateHp(const Piece &piece);
-	int getHpRecursive(int row, int col);
-	void setHpRecursive(int row, int col, const int hp);
-	*/
 };
 
