@@ -29,9 +29,7 @@ void Board::clear(){
 	}
 	for ( i=0; i<BOARD_SIZE*BOARD_SIZE; i++){
 		set_nodes[i].clear();
-		stack[i] = 0;
 	}
-	stack_size = 0;
 	#ifdef	GO_HISTORY	
 		for( i=0; i<history_head; i++){
 			history[i].clear();
@@ -52,6 +50,7 @@ void Board::clear(){
 	exist_compete = false;
 	compete[0] = GO_NULL;
 	compete[1] = compete[2] = -1;
+	game_ending = false;
 	#ifdef GO_BOARD_TIME
 		time_put = time_kill = time_random1 = time_random2 = time_getset = 0;
 	#endif
@@ -205,9 +204,7 @@ void Board::clone(const Board &board){
 	}
 	for( i=0; i<BOARD_SIZE*BOARD_SIZE; i++ ){
 		set_nodes[i] = board.set_nodes[i];
-		stack[i] = board.stack[i];
 	}
-	stack_size = board.stack_size;
 	#ifdef GO_HISTORY
 		for( i=0; i<MAX_HISTORY_LENGTH; i++){
 			history[i] = board.history[i];
@@ -229,7 +226,7 @@ void Board::clone(const Board &board){
 	compete[0] = board.compete[0];
 	compete[1] = board.compete[1];
 	compete[2] = board.compete[2];
-
+	game_ending = board.game_ending;
 }
 
 void Board::release(){
@@ -245,20 +242,6 @@ inline SetNode* Board::getSet(int row, int col){
 	return &set_nodes[set_nodes[idx].pnode];
 
 	/*
-	* using path compression
-	SetNode* ptr = &set_nodes[idx];
-	while( ptr->pnode != idx ){
-		stack[stack_size] = ptr;
-		stack_size++;
-		idx = ptr->pnode;
-		ptr = &set_nodes[idx];
-	}
-	for( int i=0; i<stack_size; i++){
-		stack[i]->pnode = idx;
-		stack[i] = 0;
-	}
-	stack_size = 0;
-
 	return ptr;
 	#ifdef GO_BOARD_TIME
 		clock_t cl=clock();
@@ -271,33 +254,16 @@ inline SetNode* Board::getSet(int row, int col){
 
 void Board::unionSetNode(SetNode* s1, SetNode* s2){
 	if ( s1 == s2 ) return;
-	int d1 = s1->deepth, d2 = s2->deepth;
-	if( d1 > d2){
-		s2->pnode = s1->pnode;
-		s1->hp += s2->hp;
-		s1->merge_pieces(*s2);
-		for( int k=0; k<(s2->size); k++ ){
-			Piece p = s2->pieces[k];
-			int i = p.row, j = p.col, agent = p.agent;
-			int idx = i*BOARD_SIZE+j;
-			set_nodes[idx].pnode = s1->pnode;
-		}
-		s2->drop();
-	}else{
-		s1->pnode = s2->pnode;
-		s2->hp += s1->hp;
-		s2->merge_pieces(*s1);
-		for( int k=0; k<(s1->size); k++ ){
-			Piece p = s1->pieces[k];
-			int i = p.row, j = p.col, agent = p.agent;
-			int idx = i*BOARD_SIZE+j;
-			set_nodes[idx].pnode =  s2->pnode;
-		}
-		s1->drop();
-		if( d1 == d2 ){
-			s2->deepth++;
-		}
+	s2->pnode = s1->pnode;
+	s1->hp += s2->hp;
+	s1->merge_pieces(*s2);
+	for( int k=0; k<(s2->size); k++ ){
+		Piece p = s2->pieces[k];
+		int i = p.row, j = p.col, agent = p.agent;
+		int idx = i*BOARD_SIZE+j;
+		set_nodes[idx].pnode = s1->pnode;
 	}
+	s2->drop();
 }
 
 void Board::killSetNode(SetNode* sn){
@@ -353,13 +319,15 @@ Piece Board::getRandomPiece(int agent){
 		clock_t cl=clock();
 	#endif
 	int row, col;
-	if( num_black + num_white + RANDOM_INCREMENT > BOARD_SIZE*BOARD_SIZE*RANDOM_THRESHOLD ){
+	if( game_ending ){
 		//return Piece();
 		return getRandomPieceComplex(agent);
 	}
 	bool flag = true;
+	int count = 0;
 	while(flag){
 		flag = false;
+		count ++;
 		row = rand() % BOARD_SIZE;
 		col = rand() % BOARD_SIZE;
 		if( data[row][col]!=GO_NULL
@@ -369,6 +337,10 @@ Piece Board::getRandomPiece(int agent){
 		)
 		{
 			flag = true;
+		}
+		if( count == ENDING_THRESHOLD ){
+			game_ending = true;
+			return getRandomPieceComplex(agent);
 		}
 	}
 	#ifdef GO_BOARD_TIME
