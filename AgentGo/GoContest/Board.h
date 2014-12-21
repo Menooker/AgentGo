@@ -8,12 +8,9 @@
 #include <stack>
 
 #define MAX_HISTORY_LENGTH	1000
-#define SPLIT_SIZE_LARGE	6	// numbers of rows in a space_split_lg;
-#define SPLIT_NUM_LARGE     ( BOARD_SIZE / SPLIT_SIZE_LARGE )	// length of space_split_lg;
 
-#define RANDOM_INCREMENT    25  // the compensation for occupied places (reserve) when checking random threshold    
-#define RANDOM_THRESHOLD    0.9
 #define SPACE_HEAD_NULL		(-1)
+#define ENDING_THRESHOLD    70
 
 using namespace std;
 
@@ -22,8 +19,7 @@ class Board
 private:
 	// Variables
 	SetNode set_nodes[BOARD_SIZE*BOARD_SIZE];
-	SetNode* stack[BOARD_SIZE*BOARD_SIZE];
-	int stack_size;
+	bool game_ending;
 
 	// Functions
 	inline SetNode* getSet(int row, int col);
