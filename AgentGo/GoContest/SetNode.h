@@ -4,7 +4,7 @@
 #include <memory.h>
 
 #define UNKNOWN_IDX  999
-#define SET_STATIC_SIZE 15
+#define SET_STATIC_SIZE 25		// enlarging this number will improve efficiency but requires much more space
 
 
 struct SetNode
