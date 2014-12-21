@@ -114,13 +114,14 @@ class MyGame:public GTPAdapter
 int _tmain(int argc, _TCHAR* argv[])
 {
 	
+	long time_put=0, time_kill=0, time_getSet=0, time_random1=0, time_random2 =0;
+	int test_size = 1000;
 
-	
 	clock_t cl=clock();
-	for(int xx=0;xx<70;xx++)
+	Board* bd=new Board();
+	for(int xx=0; xx<test_size; xx++)
 	{
 			int white_go=1,black_go=1;
-			Board* bd=new Board();
 			int cstep=0;
 			while (white_go || black_go)
 			{
@@ -152,9 +153,21 @@ int _tmain(int argc, _TCHAR* argv[])
 					bd->pass(GO_WHITE);
 				}
 			}
-			delete bd;
+			#ifdef GO_BOARD_TIME
+				time_put += bd->time_put;
+				time_kill += bd->time_kill;
+				time_random1 = bd->time_random1;
+				time_random2 = bd->time_random2;
+			#endif
+			bd->clear();
 	}
-	printf("%d\n",clock()-cl);
+	printf("total time: %d\n",clock()-cl);
+	#ifdef GO_BOARD_TIME
+		printf("time_put: %d\n",time_put);
+		printf("time_kill: %d\n",time_kill);
+		printf("time_random1: %d\n",time_random1);
+		printf("time_random2: %d\n",time_random2);
+	#endif
 	system("pause");
 	return 0;
 }
