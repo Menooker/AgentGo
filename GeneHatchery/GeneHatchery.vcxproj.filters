@@ -24,54 +24,24 @@
     <ClInclude Include="targetver.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="TinyMT.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="TinyMTConfig.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="GTPAdapter.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="DbgPipe.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Config.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="TinyOP.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="GoContest\Board.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="GoContest\Piece.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="GoContest\SetNode.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="GoContest\AgentGo.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="AgentGo.cpp">
+    <ClCompile Include="GeneHatchery.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="TinyMT.cpp">
+    <ClCompile Include="..\AgentGo\GoContest\Board.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="test.cpp">
+    <ClCompile Include="..\AgentGo\GoContest\Piece.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GTPAdapter.cpp">
+    <ClCompile Include="..\AgentGo\GoContest\SetNode.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="CpuCount.cpp">
+    <ClCompile Include="..\AgentGo\DbgPipe.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,0 +1,1 @@
+﻿This is a program using gene algorithm to improve our AgentGo. G_T_P supported
