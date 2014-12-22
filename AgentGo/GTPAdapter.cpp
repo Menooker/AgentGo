@@ -30,6 +30,8 @@ void GTPAdapter::MainLoop()
 		c=0;a=0;b=0;_komi=0.0;
 		cin.getline(buf,199);
 		//MessageBoxA(0,buf,"hhh",32);
+		if(buf[0]==0)
+			continue;
 		//pchar=buf.c_str();
 		if(seqn(buf,"genmove ",8))
 		{
