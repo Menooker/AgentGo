@@ -9,7 +9,8 @@
 
 #define GaIntToChar(i)  ((char)((i<='H'-'A')?i+'A':i+'A'+1))
 #define GaCharToInt(i)  ((int)((i<='h')?i-'a':i-'a'-1))
-
+#define ExcReplyErr 1
+#define ExcReplyInvalid 2
 
 WCHAR* DebugeeExe;
 WCHAR* ReferenceExe;
@@ -135,29 +136,35 @@ void WaitForResponse(int index,char* dbuf) //dbuf's size>200
 }
 
 char dbuf[200];
-void Genmove(int index,int isW , int & a, int& b,char& c1)
+bool Genmove(int index,int isW , int & a, int& b,char& c1)
 {
 	MyPrintf(index,"genmove %c\n",isW?'w':'b');
 	WaitForResponse(index,dbuf);
-	if(dbuf[0]=='=')
+	if(sscanf(dbuf,"= %c%d",&c1,&b)==2)
 	{
-		int flg=0;
+		a=GaCharToInt(tolower(c1));
+		c1=toupper(c1);
+		return true;
+	}
+	else
+	{
 		for(int i=1;i<strlen(dbuf);i++)
 		{
-			if(dbuf[i]!=' ') //fix-me : pass!!
+			if(dbuf[i]!=' ' && dbuf[i]!='\t' )
 			{
-				if(flg)
+				if(!strcmp(dbuf+i+1,"pass"))
 				{
-					b=atoi(dbuf+i);
-					return ;
+					return false;
 				}
-				flg=1;
-				c1=toupper(dbuf[i]);
-				a=GaCharToInt(tolower(dbuf[i]));
-
+				else
+				{
+					throw ExcReplyInvalid;
+				}
 			}
 		}
 	}
+	throw ExcReplyInvalid;
+	return false;
 }
 
 bool IsReplyOK(int index)
@@ -166,7 +173,8 @@ bool IsReplyOK(int index)
 	if(dbuf[0]==' ')
 		return true;
 	else 
-		return false; //fix-me : check the result
+		throw ExcReplyErr;
+	return false; //fix-me : check the result
 }
 
 void SimulateOneGame()
@@ -176,30 +184,69 @@ void SimulateOneGame()
 	
 	//char rbuf[200];
 	Board bd;
-	MyPrintf(0,"clear_board\n");
-	IsReplyOK(0);
-	MyPrintf(0,"board_size 13\n");
-	IsReplyOK(0);
-	MyPrintf(1,"clear_board\n");
-	IsReplyOK(1);
-	MyPrintf(1,"board_size 13\n");
-	IsReplyOK(1);
-
-	for(;;)
+	try
 	{
-		int a,b;
-		char col;
-		Genmove(0,0,a,b,col);
-		bd.put(GO_WHITE,a,b);
-		MyPrintf(1,"play w %c%d\n",col,b);
+
+		MyPrintf(0,"clear_board\n");
+		IsReplyOK(0);
+		MyPrintf(0,"board_size 13\n");
+		IsReplyOK(0);
+		MyPrintf(1,"clear_board\n");
+		IsReplyOK(1);
+		MyPrintf(1,"board_size 13\n");
 		IsReplyOK(1);
 
-		Genmove(1,1,a,b,col);
-		bd.put(GO_WHITE,a,b);
-		MyPrintf(1,"play w %c%d\n",col,b);
-		IsReplyOK(1);
+		bool lastwplay=1,bplay;
+		for(;;)
+		{
+			int a,b;
+			char col;
+			bplay=Genmove(0,0,a,b,col);
+			if(bplay)
+			{
+				bd.put(GO_BLACK,a,b);
+				MyPrintf(1,"play b %c%d\n",col,b);
+				IsReplyOK(1);
+			}
+			else
+			{
+				if(!lastwplay)
+				{
+					//end
+				}
+				else
+				{
+					MyPrintf(1,"play b pass\n");
+					IsReplyOK(1);
+				}
+			}
+			
+
+			lastwplay=Genmove(1,1,a,b,col);
+			if(lastwplay)
+			{
+				bd.put(GO_WHITE,a,b);
+				MyPrintf(0,"play w %c%d\n",col,b);
+				IsReplyOK(0);
+			}
+			else
+			{
+				if(!bplay)
+				{
+					//end
+				}
+				else
+				{
+					MyPrintf(0,"play w pass\n");
+					IsReplyOK(0);
+				}
+			}
+		}
 	}
+	catch (int& Ex)
+	{
 
+	}
 	TerminateProcess(hDebugee,0);
 	TerminateProcess(hReference,0);
 	CloseHandle(hDebugee);
