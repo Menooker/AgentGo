@@ -74,5 +74,17 @@
     <ClCompile Include="CpuCount.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="GoContest\Board.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DbgPipe.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GoContest\Piece.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GoContest\SetNode.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

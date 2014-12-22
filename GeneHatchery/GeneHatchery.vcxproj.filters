@@ -35,13 +35,13 @@
     <ClCompile Include="..\AgentGo\GoContest\Board.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\AgentGo\DbgPipe.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
     <ClCompile Include="..\AgentGo\GoContest\Piece.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\AgentGo\GoContest\SetNode.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="..\AgentGo\DbgPipe.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

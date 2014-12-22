@@ -170,11 +170,17 @@ bool Genmove(int index,int isW , int & a, int& b,char& c1)
 bool IsReplyOK(int index)
 {
 	WaitForResponse(index,dbuf);
-	if(dbuf[0]==' ')
+	if(dbuf[0]=='=')
 		return true;
 	else 
 		throw ExcReplyErr;
 	return false; //fix-me : check the result
+}
+
+void CalcResults(Board& bd)
+{
+	bd.print();
+
 }
 
 void SimulateOneGame()
@@ -184,16 +190,16 @@ void SimulateOneGame()
 	
 	//char rbuf[200];
 	Board bd;
-	try
-	{
+	//try
+	//{
 
 		MyPrintf(0,"clear_board\n");
 		IsReplyOK(0);
-		MyPrintf(0,"board_size 13\n");
+		MyPrintf(0,"boardsize 13\n");
 		IsReplyOK(0);
 		MyPrintf(1,"clear_board\n");
 		IsReplyOK(1);
-		MyPrintf(1,"board_size 13\n");
+		MyPrintf(1,"boardsize 13\n");
 		IsReplyOK(1);
 
 		bool lastwplay=1,bplay;
@@ -213,9 +219,12 @@ void SimulateOneGame()
 				if(!lastwplay)
 				{
 					//end
+					CalcResults(bd);
+					break;
 				}
 				else
 				{
+					bd.pass(GO_BLACK);
 					MyPrintf(1,"play b pass\n");
 					IsReplyOK(1);
 				}
@@ -234,19 +243,22 @@ void SimulateOneGame()
 				if(!bplay)
 				{
 					//end
+					CalcResults(bd);
+					break;
 				}
 				else
 				{
+					bd.pass(GO_WHITE);
 					MyPrintf(0,"play w pass\n");
 					IsReplyOK(0);
 				}
 			}
 		}
-	}
-	catch (int& Ex)
-	{
+	//}
+	//catch (int& Ex)
+	//{
 
-	}
+	//}
 	TerminateProcess(hDebugee,0);
 	TerminateProcess(hReference,0);
 	CloseHandle(hDebugee);

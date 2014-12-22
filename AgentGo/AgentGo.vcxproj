@@ -95,6 +95,10 @@
   <ItemGroup>
     <ClCompile Include="AgentGo.cpp" />
     <ClCompile Include="CpuCount.cpp" />
+    <ClCompile Include="DbgPipe.cpp" />
+    <ClCompile Include="GoContest\Board.cpp" />
+    <ClCompile Include="GoContest\Piece.cpp" />
+    <ClCompile Include="GoContest\SetNode.cpp" />
     <ClCompile Include="GTPAdapter.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="test.cpp" />
