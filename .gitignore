@@ -31,3 +31,4 @@ $tf*/
 **/*.ipch
 AgentGo.opensdf
 AgentGo/AgentGo.cpp.orig
+*.ghp
