@@ -459,7 +459,7 @@ class MyGame:public GTPAdapter
 				{
 					for(int j=0;j<13;j++)
 					{
-						if(bd.data[i][j]!=GO_NULL)
+						if(bd.checkTrueEye(isW+1,i,j) || bd.data[i][j]!=GO_NULL || bd.checkSuicide(isW+1,i,j))
 							continue;
 						jobs[i][j]=new MyJob(bd);
 						jobs[i][j]->i=i;
@@ -490,7 +490,7 @@ class MyGame:public GTPAdapter
 			{
 				for (int j=0;j<13;++j)
 				{
-					if (bd.checkTrueEye(isW+1,i,j) || bd.data[i][j]!=GO_NULL)
+					if (bd.checkTrueEye(isW+1,i,j) || bd.data[i][j]!=GO_NULL || bd.checkSuicide(isW+1,i,j))
 					{
 						continue;
 					}
