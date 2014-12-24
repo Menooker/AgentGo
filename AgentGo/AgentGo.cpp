@@ -33,8 +33,8 @@ public:
 	int mark[13][13];
 	MyJob(Board& old)
 	{
-		//bd=boardpool.tnew(&old);
-		bd=new Board(old);
+		bd=boardpool.tnew(&old);
+		//bd=new Board(old);
 		for (int i=0;i<13;++i)
 		{
 			for (int j=0;j<13;++j)
@@ -45,8 +45,8 @@ public:
 	}
 	~MyJob()
 	{
-		//boardpool.tdelete(bd);
-		delete bd;
+		boardpool.tdelete(bd);
+		//delete bd;
 	}
 };
 
@@ -475,14 +475,6 @@ class MyGame:public GTPAdapter
 			delete psch;
 		
 			/////delete "jobs"
-				for( int i=0;i<13;i++)
-				{
-					for(int j=0;j<13;j++)
-					{
-						if(jobs[i][j])
-							delete jobs[i][j];
-					}
-				}
 			tmp=0;
 			int tmp_i;
 			int tmp_j;
@@ -490,15 +482,19 @@ class MyGame:public GTPAdapter
 			{
 				for (int j=0;j<13;++j)
 				{
-					if (bd.checkTrueEye(isW+1,i,j) || bd.data[i][j]!=GO_NULL || bd.checkSuicide(isW+1,i,j))
+					if(jobs[i][j])
 					{
-						continue;
-					}
-					if (total_mark[i][j]>tmp)
-					{
-						tmp=total_mark[i][j];
-						tmp_i=i;
-						tmp_j=j;
+						delete jobs[i][j];
+						/*if (bd.checkTrueEye(isW+1,i,j) || bd.data[i][j]!=GO_NULL || bd.checkSuicide(isW+1,i,j))
+						{
+							continue;
+						}*/
+						if (total_mark[i][j]>tmp)
+						{
+							tmp=total_mark[i][j];
+							tmp_i=i;
+							tmp_j=j;
+						}
 					}
 				}
 			}
