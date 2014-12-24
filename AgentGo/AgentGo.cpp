@@ -515,9 +515,15 @@ class MyGame:public GTPAdapter
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	
+	if(argc==4)
+	{
+		index_a=_wtof(argv[1]);
+		index_b=_wtof(argv[2]);
+		index_c=_wtof(argv[3]);
+	}
 	dinitdbg();
-	dprintf("%d\n",sizeof(Board));
+	dprintf("%f %f %f\n",index_a,index_b,index_c);
+	dprintf("sz bd %d\n",sizeof(Board));
 	srand(time(0));
 	MyGame gm;
 	gm.MainLoop(); 
