@@ -6,6 +6,8 @@
 #include <string.h>
 #include <Windows.h>
 #include "../AgentGo/GoContest/Board.h"
+#include <WinSock.h>
+#pragma comment(lib, "WS2_32") 
 
 
 #define MUTATION_RATE 5
@@ -15,6 +17,7 @@
 #define GaCharToInt(i)  ((int)((i<='h')?i-'a':i-'a'-1))
 #define ExcReplyErr 1
 #define ExcReplyInvalid 2
+#define ExcBindErr 3
 
 WCHAR* DebugeeExe;
 WCHAR* ReferenceExe;
@@ -30,6 +33,76 @@ HANDLE  hStdOutWrite[2];    ///子进程用的stdout的写入端
 HANDLE  hStdErrWrite[2];       ///子进程用的stderr的写入端  
 
 
+
+struct ServerParam
+{
+	int port;
+	int* pscore;
+	SOCKET slisten;
+	SOCKET sClient;
+};
+
+struct ServerConfig
+{
+	int ndna;
+	double dnas[15];
+};
+
+DWORD __stdcall ServerProc(ServerParam* p)
+{
+    p->slisten = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if(p->slisten == INVALID_SOCKET)
+    {
+        printf("socket error !");
+        return 0;
+    }
+
+    //绑定IP和端口
+    sockaddr_in sin;
+    sin.sin_family = AF_INET;
+    sin.sin_port = htons(p->port);
+    sin.sin_addr.S_un.S_addr = INADDR_ANY; 
+    if(bind(p->slisten, (LPSOCKADDR)&sin, sizeof(sin)) == SOCKET_ERROR)
+    {
+        printf("bind error !");
+		throw ExcBindErr;
+    }
+
+    //开始监听
+    if(listen(p->slisten, 5) == SOCKET_ERROR)
+    {
+        printf("listen error !");
+        throw ExcBindErr;
+    }
+
+    //循环接收数据
+    sockaddr_in remoteAddr;
+    int nAddrlen = sizeof(remoteAddr);
+    char revData[255]; 
+    printf("port %d waiting for connections...\n",p->port);
+    p->sClient = accept(p->slisten, (SOCKADDR *)&remoteAddr, &nAddrlen);
+    if(p->sClient == INVALID_SOCKET)
+    {
+        printf("accept error !");
+        throw ExcBindErr;
+    }
+    printf("port %d accepted ：%s \n",p->port , inet_ntoa(remoteAddr.sin_addr));
+	/*send(sClient, sendData, strlen(sendData), 0);
+    //接收数据
+    int ret = recv(sClient, revData, 255, 0);        
+    if(ret > 0)
+    {
+        revData[ret] = 0x00;
+        printf(revData);
+    }
+
+    //发送数据
+    char * sendData = "你好，TCP客户端！\n";
+    
+    closesocket(sClient);
+    closesocket(slisten);*/
+	return 0;
+}
 
 
 void CreatePipes()
@@ -443,7 +516,7 @@ void mate(double f[],double m[],double s[],int DNAs)
 	}
 }
 
-void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* olddata)
+void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* olddata,ServerParam* parm)
 {
 	printf("Slaves: %d, DNAs: %d\n",slaves,DNAs);
 	if(olddata)
@@ -477,7 +550,7 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 	CreatePipes();
 
 	int s1,s2,j;
-	for(int rnd=0;rnd<5;rnd++)
+	for(int rnd=0;rnd<rounds;rnd++)
 	{
 		FILE* fp=fopen("progress.ghp","wb");
 		fwrite(&slaves,sizeof(slaves),1,fp);
@@ -494,24 +567,30 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 		for(int i=0;i<cnt;i++)
 		{
 			int index[2]={0,1};
-			printf("%d:Testing gene : ",rnd);print_gene(hatchery[i],DNAs);
+			printf("%d:%d Testing gene : ",rnd,i);print_gene(hatchery[i],DNAs);
 			s1=SimulateOneGame(hatchery[i],DNAs,index);
 			printf("score : %d\n",s1);
 
-			//index[0]=1;index[1]=0;
-			//printf("%d:Testing gene : ",rnd);print_gene(hatchery[i],DNAs);
-			//s2= -SimulateOneGame(hatchery[i],DNAs,index);
-			//printf("score : %d\n",s2);
-			s2=s1;
+			index[0]=1;index[1]=0;
+			printf("%d:%d Testing gene : ",rnd,i);print_gene(hatchery[i],DNAs);
+			s2= -SimulateOneGame(hatchery[i],DNAs,index);
+			printf("score : %d\n",s2);
+			//s2=s1;
 			scores[i]= (s1+s2)/2;
 		}
 		bubble(scores,sort_index,cnt);
-
+		FILE* outfile=fopen("bests.csv","a+");
+		fprintf(outfile,"%d",rnd);
+		for(int i=0;i<DNAs;i++)
+		{
+			fprintf(outfile,",%f",hatchery[sort_index[0]][i]);
+		}
+		fprintf(outfile,",%d\n",scores[sort_index[0]]);
+		fclose(outfile);
 		for(int i=cnt/2;i<cnt;i++)
 		{
 			j=i-cnt/2;
-			mate(hatchery[j],hatchery[j+1],hatchery[i],DNAs);
-			
+			mate(hatchery[j],hatchery[j+1],hatchery[i],DNAs);	
 		}
 
 	}
@@ -527,9 +606,15 @@ void param_abort()
 	printf("Bad parameters!\n");
 	exit(-1);
 }
-
+//-f progress.ghp
 int _tmain(int argc, _TCHAR* argv[])
 {
+    WORD sockVersion = MAKEWORD(2,2);
+    WSADATA wsaData;
+    if(WSAStartup(sockVersion, &wsaData)!=0)
+    {
+        return 0;
+    }
 	srand(time(NULL));
 	if(argc>=3)
 	{
@@ -599,7 +684,29 @@ int _tmain(int argc, _TCHAR* argv[])
 					else
 						param_abort();
 				}
-				master(slaves,DNAs,initDNA,cnt,rounds,olddata);
+				ServerParam* servers=0;
+				HANDLE* handles=0;
+				if(slaves>0)
+				{
+					servers=(ServerParam*)malloc(sizeof(ServerParam)*slaves);
+					handles=(HANDLE*)malloc(sizeof(HANDLE)*slaves);
+					for(int i=0;i<slaves;i++)
+					{
+						servers[i].port=3000+i;
+						handles[i]=CreateThread(0,0,(LPTHREAD_START_ROUTINE)ServerProc,&servers[i],0,0);
+					}
+					WaitForMultipleObjects(slaves,handles,TRUE,-1);
+					for(int i=0;i<slaves;i++)
+					{
+						CloseHandle(handles[i]);
+					}
+				}
+				master(slaves,DNAs,initDNA,cnt,rounds,olddata,servers);
+				if(servers)
+				{
+					free(servers);
+					free(handles);
+				}//fix-me : close the sockets
 			}
 			else
 				param_abort();
@@ -609,6 +716,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 		param_abort();
 	}
+	WSACleanup();
 	system("pause");
 	return 0;
 }
