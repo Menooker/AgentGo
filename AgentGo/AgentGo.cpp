@@ -65,6 +65,7 @@ class MyWorker:public SWorker
 		int num_b_2=mj->bd->num_black;
 		int num_w_2=mj->bd->num_white;
 		int run=2-mj->isWh;
+		int numset=50;
 					//¼´Ê±ÀûÒæ
 			if (mj->isWh==1)
 			{
@@ -217,99 +218,105 @@ class MyWorker:public SWorker
 
 			}
 
-		bool white_go=1;
-		bool black_go=1;
-		if (mj->isWh==1)
+		Board bdnew(mj->bd);
+		for (int ii=0;ii<numset;++ii)
 		{
-			int cstep=0;
-			while (white_go || black_go)
+			mj->bd->clone(bdnew);
+			memset(mj->mark,0,sizeof(int)*13*13);
+			bool white_go=1;
+			bool black_go=1;
+			if (mj->isWh==1)
 			{
-				Piece rand;
-				//mj->bd->print();
-				//AG_PANIC();
-				rand=mj->bd->getRandomPiece(GO_BLACK);
-				if (!rand.isEmpty())
+				int cstep=0;
+				while (white_go || black_go)
 				{
-					mj->bd->put(rand);//hei fang xia
-					black_go=1;
-				}
-				else
-				{
-					black_go=0;
-					mj->bd->pass(GO_BLACK);
-				}
-				rand=mj->bd->getRandomPiece(GO_WHITE);
-				if (!rand.isEmpty())
-				{
-					mj->bd->put(rand);//bai fang xia
-					cstep++;
-					white_go=1;
-					mj->mark[rand.row][rand.col]=cstep;
-				}
-				else
-				{
-					white_go=0;
-					mj->bd->pass(GO_WHITE);
-				}
-			}
-			int white_win=mj->bd->num_white-mj->bd->num_black;
-
-			for (int i=0;i<13;++i)
-			{
-				for (int j=0;j<13;++j)
-				{
-					if (mj->mark[i][j]!=0)
+					Piece rand;
+					//mj->bd->print();
+					//AG_PANIC();
+					rand=mj->bd->getRandomPiece(GO_BLACK);
+					if (!rand.isEmpty())
 					{
-						total_mark[i][j]+=(100/mj->mark[i][j])*white_win*index_c;
+						mj->bd->put(rand);//hei fang xia
+						black_go=1;
 					}
-
-				}
-			}
-		}
-		else
-		{
-			int cstep=0;
-			while (white_go || black_go)
-			{
-				Piece rand;
-				//mj->bd->print();
-				//AG_PANIC();
-				rand=mj->bd->getRandomPiece(GO_WHITE);
-				if (!rand.isEmpty())
-				{
-					mj->bd->put(rand);//hei fang xia
-					white_go=1;
-				}
-				else
-				{
-					white_go=0;
-					mj->bd->pass(GO_WHITE);
-				}
-				rand=mj->bd->getRandomPiece(GO_BLACK);
-				if (!rand.isEmpty())
-				{
-					mj->bd->put(rand);//bai fang xia
-					cstep++;
-					black_go=1;
-					mj->mark[rand.row][rand.col]=cstep;
-				}
-				else
-				{
-					black_go=0;
-					mj->bd->pass(GO_BLACK);
-				}
-			}
-			int black_win=mj->bd->num_black-mj->bd->num_white;
-
-			for (int i=0;i<13;++i)
-			{
-				for (int j=0;j<13;++j)
-				{
-					if (mj->mark[i][j]!=0)
+					else
 					{
-						total_mark[i][j]+=(100/mj->mark[i][j])*black_win*index_c;
+						black_go=0;
+						mj->bd->pass(GO_BLACK);
 					}
+					rand=mj->bd->getRandomPiece(GO_WHITE);
+					if (!rand.isEmpty())
+					{
+						mj->bd->put(rand);//bai fang xia
+						cstep++;
+						white_go=1;
+						mj->mark[rand.row][rand.col]=cstep;
+					}
+					else
+					{
+						white_go=0;
+						mj->bd->pass(GO_WHITE);
+					}
+				}
+				int white_win=mj->bd->num_white-mj->bd->num_black;
 
+				for (int i=0;i<13;++i)
+				{
+					for (int j=0;j<13;++j)
+					{
+						if (mj->mark[i][j]!=0)
+						{
+							total_mark[i][j]+=(100/mj->mark[i][j])*white_win*index_c;
+						}
+
+					}
+				}
+			}
+			else
+			{
+				int cstep=0;
+				while (white_go || black_go)
+				{
+					Piece rand;
+					//mj->bd->print();
+					//AG_PANIC();
+					rand=mj->bd->getRandomPiece(GO_WHITE);
+					if (!rand.isEmpty())
+					{
+						mj->bd->put(rand);//hei fang xia
+						white_go=1;
+					}
+					else
+					{
+						white_go=0;
+						mj->bd->pass(GO_WHITE);
+					}
+					rand=mj->bd->getRandomPiece(GO_BLACK);
+					if (!rand.isEmpty())
+					{
+						mj->bd->put(rand);//bai fang xia
+						cstep++;
+						black_go=1;
+						mj->mark[rand.row][rand.col]=cstep;
+					}
+					else
+					{
+						black_go=0;
+						mj->bd->pass(GO_BLACK);
+					}
+				}
+				int black_win=mj->bd->num_black-mj->bd->num_white;
+
+				for (int i=0;i<13;++i)
+				{
+					for (int j=0;j<13;++j)
+					{
+						if (mj->mark[i][j]!=0)
+						{
+							total_mark[i][j]+=(100/mj->mark[i][j])*black_win*index_c;
+						}
+
+					}
 				}
 			}
 		}
@@ -444,27 +451,23 @@ class MyGame:public GTPAdapter
 		}
 		else if (step>4)
 		{
-			int numset=50;
-			MyJob* jobs[13][13][51]={0};
+			MyJob* jobs[13][13]={0};
 			Scheduler<MyWorker>* psch=new Scheduler<MyWorker>(true);
 
 			/////////////submit the jobs
-			for (int ii=0;ii<numset;++ii)
-			{
 				for( int i=0;i<13;i++)
 				{
 					for(int j=0;j<13;j++)
 					{
 						if(bd.data[i][j]!=GO_NULL)
 							continue;
-						jobs[i][j][ii]=new MyJob(bd);
-						jobs[i][j][ii]->i=i;
-						jobs[i][j][ii]->j=j;
-						jobs[i][j][ii]->isWh=isW;
-						psch->submit(jobs[i][j][ii],1);
+						jobs[i][j]=new MyJob(bd);
+						jobs[i][j]->i=i;
+						jobs[i][j]->j=j;
+						jobs[i][j]->isWh=isW;
+						psch->submit(jobs[i][j],1);
 					}
 				}
-			}
 
 			/////run the threads and wait for the work completes
 			psch->go();
@@ -472,17 +475,14 @@ class MyGame:public GTPAdapter
 			delete psch;
 		
 			/////delete "jobs"
-			for (int ii=0;ii<numset;++ii)
-			{
 				for( int i=0;i<13;i++)
 				{
 					for(int j=0;j<13;j++)
 					{
-						if(jobs[i][j][ii])
-							delete jobs[i][j][ii];
+						if(jobs[i][j])
+							delete jobs[i][j];
 					}
 				}
-			}
 			tmp=0;
 			int tmp_i;
 			int tmp_j;
