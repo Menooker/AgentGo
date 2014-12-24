@@ -15,6 +15,9 @@ using namespace TinyMT;
 TinyOP<Board> boardpool(1000);
 
 double total_mark[13][13];
+double index_a=1000;
+double index_b=1;
+double index_c=1;
 class MyObject: public TObject
 {
 
@@ -58,152 +61,151 @@ class MyWorker:public SWorker
 		MyJob* mj=(MyJob*)j;
 		int num_b_1=mj->bd->num_black;
 		int num_w_1=mj->bd->num_white;
-		if (mj->isWh==1)
-		{
-			mj->bd->put(GO_WHITE,mj->i,mj->j);
-		}
-		else
-		{
-			mj->bd->put(GO_BLACK,mj->i,mj->j);
-		}
+		mj->bd->put(mj->isWh+1,mj->i,mj->j);
 		int num_b_2=mj->bd->num_black;
 		int num_w_2=mj->bd->num_white;
-		if (mj->isWh==1)
-		{
-			//即时利益
-			total_mark[mj->i][mj->j]+=(num_w_2-num_w_1+num_b_1-num_b_2)*10;
+		int run=2-mj->isWh;
+					//即时利益
+			if (mj->isWh==1)
+			{
+				total_mark[mj->i][mj->j]+=(num_w_2-num_w_1+num_b_1-num_b_2)*index_a;
+			}
+			else
+			{
+				total_mark[mj->i][mj->j]-=(num_w_2-num_w_1+num_b_1-num_b_2)*index_a;
+			}
 			if (mj->i>=2 && mj->i<=10 && mj->j>=2 && mj->j<=10)
 			{
 				//连
-				if (mj->bd->data[mj->i][mj->j-1]==GO_WHITE)
+				if (mj->bd->data[mj->i][mj->j-1]==mj->isWh+1)
 				{
-					total_mark[mj->i][mj->j]+=1;
+					total_mark[mj->i][mj->j]+=index_b;
 				}
-				else if (mj->bd->data[mj->i][mj->j-1]==GO_BLACK)
+				else if (mj->bd->data[mj->i][mj->j-1]==run)
 				{
-					total_mark[mj->i][mj->j]-=1;
+					total_mark[mj->i][mj->j]-=index_b;
 				}
-				if (mj->bd->data[mj->i-1][mj->j]==GO_WHITE)
+				if (mj->bd->data[mj->i-1][mj->j]==mj->isWh+1)
 				{
-					total_mark[mj->i][mj->j]+=1;
+					total_mark[mj->i][mj->j]+=index_b;
 				}
-				else if (mj->bd->data[mj->i-1][mj->j]==GO_BLACK)
+				else if (mj->bd->data[mj->i-1][mj->j]==run)
 				{
-					total_mark[mj->i][mj->j]-=1;
+					total_mark[mj->i][mj->j]-=index_b;
 				}
-				if (mj->bd->data[mj->i][mj->j+1]==GO_WHITE)
+				if (mj->bd->data[mj->i][mj->j+1]==mj->isWh+1)
 				{
-					total_mark[mj->i][mj->j]+=1;
+					total_mark[mj->i][mj->j]+=index_b;
 				}
-				else if (mj->bd->data[mj->i][mj->j+1]==GO_BLACK)
+				else if (mj->bd->data[mj->i][mj->j+1]==run)
 				{
-					total_mark[mj->i][mj->j]-=1;
+					total_mark[mj->i][mj->j]-=index_b;
 				}
-				if (mj->bd->data[mj->i+1][mj->j]==GO_WHITE)
+				if (mj->bd->data[mj->i+1][mj->j]==mj->isWh+1)
 				{
-					total_mark[mj->i][mj->j]+=1;
+					total_mark[mj->i][mj->j]+=index_b;
 				}
-				else if (mj->bd->data[mj->i+1][mj->j]==GO_BLACK)
+				else if (mj->bd->data[mj->i+1][mj->j]==run)
 				{
-					total_mark[mj->i][mj->j]-=1;
+					total_mark[mj->i][mj->j]-=index_b;
 				}
 				//尖
-				if (mj->bd->data[mj->i+1][mj->j+1]==GO_WHITE)
+				if (mj->bd->data[mj->i+1][mj->j+1]==mj->isWh+1)
 				{
-					total_mark[mj->i][mj->j]+=1;
+					total_mark[mj->i][mj->j]+=index_b;
 				}
-				else if (mj->bd->data[mj->i+1][mj->j+1]==GO_BLACK)
+				else if (mj->bd->data[mj->i+1][mj->j+1]==run)
 				{
-					total_mark[mj->i][mj->j]-=1;
+					total_mark[mj->i][mj->j]-=index_b;
 				}
-				if (mj->bd->data[mj->i+1][mj->j-1]==GO_WHITE)
+				if (mj->bd->data[mj->i+1][mj->j-1]==mj->isWh+1)
 				{
-					total_mark[mj->i][mj->j]+=1;
+					total_mark[mj->i][mj->j]+=index_b;
 				}
-				else if (mj->bd->data[mj->i+1][mj->j-1]==GO_BLACK)
+				else if (mj->bd->data[mj->i+1][mj->j-1]==run)
 				{
-					total_mark[mj->i][mj->j]-=1;
+					total_mark[mj->i][mj->j]-=index_b;
 				}
-				if (mj->bd->data[mj->i-1][mj->j+1]==GO_WHITE)
+				if (mj->bd->data[mj->i-1][mj->j+1]==mj->isWh+1)
 				{
-					total_mark[mj->i][mj->j]+=1;
+					total_mark[mj->i][mj->j]+=index_b;
 				}
-				else if (mj->bd->data[mj->i-1][mj->j+1]==GO_BLACK)
+				else if (mj->bd->data[mj->i-1][mj->j+1]==run)
 				{
-					total_mark[mj->i][mj->j]-=1;
+					total_mark[mj->i][mj->j]-=index_b;
 				}
-				if (mj->bd->data[mj->i-1][mj->j-1]==GO_WHITE)
+				if (mj->bd->data[mj->i-1][mj->j-1]==mj->isWh+1)
 				{
-					total_mark[mj->i][mj->j]+=1;
+					total_mark[mj->i][mj->j]+=index_b;
 				}
-				else if (mj->bd->data[mj->i-1][mj->j-1]==GO_BLACK)
+				else if (mj->bd->data[mj->i-1][mj->j-1]==run)
 				{
-					total_mark[mj->i][mj->j]-=1;
+					total_mark[mj->i][mj->j]-=index_b;
 				}
 				//飞
-				if (mj->bd->data[mj->i-1][mj->j+2]==GO_WHITE)
+				if (mj->bd->data[mj->i-1][mj->j+2]==mj->isWh+1)
 				{
-					total_mark[mj->i][mj->j]+=1;
+					total_mark[mj->i][mj->j]+=index_b;
 				}
-				else if (mj->bd->data[mj->i-1][mj->j+2]==GO_BLACK)
+				else if (mj->bd->data[mj->i-1][mj->j+2]==run)
 				{
-					total_mark[mj->i][mj->j]-=1;
+					total_mark[mj->i][mj->j]-=index_b;
 				}
-				if (mj->bd->data[mj->i+1][mj->j-2]==GO_WHITE)
+				if (mj->bd->data[mj->i+1][mj->j-2]==mj->isWh+1)
 				{
-					total_mark[mj->i][mj->j]+=1;
+					total_mark[mj->i][mj->j]+=index_b;
 				}
-				else if (mj->bd->data[mj->i+1][mj->j-2]==GO_BLACK)
+				else if (mj->bd->data[mj->i+1][mj->j-2]==run)
 				{
-					total_mark[mj->i][mj->j]-=1;
+					total_mark[mj->i][mj->j]-=index_b;
 				}
-				if (mj->bd->data[mj->i-1][mj->j-2]==GO_WHITE)
+				if (mj->bd->data[mj->i-1][mj->j-2]==mj->isWh+1)
 				{
-					total_mark[mj->i][mj->j]+=1;
+					total_mark[mj->i][mj->j]+=index_b;
 				}
-				else if (mj->bd->data[mj->i-1][mj->j-2]==GO_BLACK)
+				else if (mj->bd->data[mj->i-1][mj->j-2]==run)
 				{
-					total_mark[mj->i][mj->j]-=1;
+					total_mark[mj->i][mj->j]-=index_b;
 				}
-				if (mj->bd->data[mj->i-2][mj->j-1]==GO_WHITE)
+				if (mj->bd->data[mj->i-2][mj->j-1]==mj->isWh+1)
 				{
-					total_mark[mj->i][mj->j]+=1;
+					total_mark[mj->i][mj->j]+=index_b;
 				}
-				else if (mj->bd->data[mj->i-2][mj->j-1]==GO_BLACK)
+				else if (mj->bd->data[mj->i-2][mj->j-1]==run)
 				{
-					total_mark[mj->i][mj->j]-=1;
+					total_mark[mj->i][mj->j]-=index_b;
 				}
-				if (mj->bd->data[mj->i+1][mj->j+2]==GO_WHITE)
+				if (mj->bd->data[mj->i+1][mj->j+2]==mj->isWh+1)
 				{
-					total_mark[mj->i][mj->j]+=1;
+					total_mark[mj->i][mj->j]+=index_b;
 				}
-				else if (mj->bd->data[mj->i+1][mj->j+2]==GO_BLACK)
+				else if (mj->bd->data[mj->i+1][mj->j+2]==run)
 				{
-					total_mark[mj->i][mj->j]-=1;
+					total_mark[mj->i][mj->j]-=index_b;
 				}
-				if (mj->bd->data[mj->i+2][mj->j+1]==GO_WHITE)
+				if (mj->bd->data[mj->i+2][mj->j+1]==mj->isWh+1)
 				{
-					total_mark[mj->i][mj->j]+=1;
+					total_mark[mj->i][mj->j]+=index_b;
 				}
-				else if (mj->bd->data[mj->i+2][mj->j+1]==GO_BLACK)
+				else if (mj->bd->data[mj->i+2][mj->j+1]==run)
 				{
-					total_mark[mj->i][mj->j]-=1;
+					total_mark[mj->i][mj->j]-=index_b;
 				}
-				if (mj->bd->data[mj->i+1][mj->j-2]==GO_WHITE)
+				if (mj->bd->data[mj->i+1][mj->j-2]==mj->isWh+1)
 				{
-					total_mark[mj->i][mj->j]+=1;
+					total_mark[mj->i][mj->j]+=index_b;
 				}
-				else if (mj->bd->data[mj->i+1][mj->j-2]==GO_BLACK)
+				else if (mj->bd->data[mj->i+1][mj->j-2]==run)
 				{
-					total_mark[mj->i][mj->j]-=1;
+					total_mark[mj->i][mj->j]-=index_b;
 				}
-				if (mj->bd->data[mj->i+2][mj->j-1]==GO_WHITE)
+				if (mj->bd->data[mj->i+2][mj->j-1]==mj->isWh+1)
 				{
-					total_mark[mj->i][mj->j]+=1;
+					total_mark[mj->i][mj->j]+=index_b;
 				}
-				else if (mj->bd->data[mj->i+2][mj->j-1]==GO_BLACK)
+				else if (mj->bd->data[mj->i+2][mj->j-1]==run)
 				{
-					total_mark[mj->i][mj->j]-=1;
+					total_mark[mj->i][mj->j]-=index_b;
 				}
 			}
 			else if (mj->i==0 && mj->i==12 && mj->j==0 && mj->j==12)
@@ -214,12 +216,7 @@ class MyWorker:public SWorker
 			{
 
 			}
-			
-		}
-		else
-		{
-			total_mark[mj->i][mj->j]+=(num_b_2-num_b_1+num_w_1-num_w_2)*10;
-		}
+
 		bool white_go=1;
 		bool black_go=1;
 		if (mj->isWh==1)
@@ -263,7 +260,7 @@ class MyWorker:public SWorker
 				{
 					if (mj->mark[i][j]!=0)
 					{
-						total_mark[i][j]+=(100/mj->mark[i][j])*white_win;
+						total_mark[i][j]+=(100/mj->mark[i][j])*white_win*index_c;
 					}
 
 				}
@@ -271,10 +268,51 @@ class MyWorker:public SWorker
 		}
 		else
 		{
-			mj->bd->put(GO_BLACK,mj->i,mj->j);
+			int cstep=0;
+			while (white_go || black_go)
+			{
+				Piece rand;
+				//mj->bd->print();
+				//AG_PANIC();
+				rand=mj->bd->getRandomPiece(GO_WHITE);
+				if (!rand.isEmpty())
+				{
+					mj->bd->put(rand);//hei fang xia
+					white_go=1;
+				}
+				else
+				{
+					white_go=0;
+					mj->bd->pass(GO_WHITE);
+				}
+				rand=mj->bd->getRandomPiece(GO_BLACK);
+				if (!rand.isEmpty())
+				{
+					mj->bd->put(rand);//bai fang xia
+					cstep++;
+					black_go=1;
+					mj->mark[rand.row][rand.col]=cstep;
+				}
+				else
+				{
+					black_go=0;
+					mj->bd->pass(GO_BLACK);
+				}
+			}
+			int black_win=mj->bd->num_black-mj->bd->num_white;
+
+			for (int i=0;i<13;++i)
+			{
+				for (int j=0;j<13;++j)
+				{
+					if (mj->mark[i][j]!=0)
+					{
+						total_mark[i][j]+=(100/mj->mark[i][j])*black_win*index_c;
+					}
+
+				}
+			}
 		}
-		//here////////////////////////////
-		//dprintf("job (%d,%d) enter\n",mj->i,mj->j);
 	}
 };
 
@@ -359,23 +397,23 @@ class MyGame:public GTPAdapter
 				}
 				if (takereg[0]==0)
 				{
-					a=2;
-					b=2;
+					a=3;
+					b=3;
 				}
 				else if (takereg[8]==0)
 				{
-					a=10;
-					b=10;
+					a=9;
+					b=9;
 				}
 				else if (takereg[2]==0)
 				{
-					a=2;
-					b=10;
+					a=3;
+					b=9;
 				}
 				else if (takereg[6]==0)
 				{
-					a=10;
-					b=2;
+					a=9;
+					b=3;
 				}
 				else if (takereg[1]==0)
 				{
@@ -407,22 +445,25 @@ class MyGame:public GTPAdapter
 		else if (step>4)
 		{
 
-			MyJob* jobs[13][13]={0};
+			MyJob* jobs[13][13][5]={0};
 			Scheduler<MyWorker>* psch=new Scheduler<MyWorker>(true);
 
 			/////////////submit the jobs
+			for (int ii=0;ii<2;++ii)
+			{
 			for( int i=0;i<13;i++)
 			{
 				for(int j=0;j<13;j++)
 				{
 					if(bd.data[i][j]!=GO_NULL)
 						continue;
-					jobs[i][j]=new MyJob(bd);
-					jobs[i][j]->i=i;
-					jobs[i][j]->j=j;
-					jobs[i][j]->isWh=isW;
-					psch->submit(jobs[i][j],1);
+					jobs[i][j][ii]=new MyJob(bd);
+					jobs[i][j][ii]->i=i;
+					jobs[i][j][ii]->j=j;
+					jobs[i][j][ii]->isWh=isW;
+					psch->submit(jobs[i][j][ii],1);
 				}
+			}
 			}
 
 			/////run the threads and wait for the work completes
@@ -431,13 +472,16 @@ class MyGame:public GTPAdapter
 			delete psch;
 		
 			/////delete "jobs"
+			for (int ii=0;ii<2;++ii)
+			{
 			for( int i=0;i<13;i++)
 			{
 				for(int j=0;j<13;j++)
 				{
-					if(jobs[i][j])
-						delete jobs[i][j];
+					if(jobs[i][j][ii])
+						delete jobs[i][j][ii];
 				}
+			}
 			}
 			tmp=0;
 			int tmp_i;
@@ -446,6 +490,10 @@ class MyGame:public GTPAdapter
 			{
 				for (int j=0;j<13;++j)
 				{
+					if (bd.checkTrueEye(isW+1,i,j) || bd.data[i][j]!=GO_NULL)
+					{
+						continue;
+					}
 					if (total_mark[i][j]>tmp)
 					{
 						tmp=total_mark[i][j];
