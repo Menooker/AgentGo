@@ -2,12 +2,19 @@
 //
 
 #include "stdafx.h"
+#include <stack>
 #include <stdlib.h>
 #include <string.h>
 #include <Windows.h>
 #include "../AgentGo/GoContest/Board.h"
 #include <WinSock.h>
 #pragma comment(lib, "WS2_32") 
+
+/*
+Network Mode Limits:
+50 genes with 10 DNA positions
+
+*/
 
 
 #define MUTATION_RATE 5
@@ -44,9 +51,59 @@ struct ServerParam
 
 struct ServerConfig
 {
+	int Magic;
+	int id;
 	int ndna;
 	double dnas[15];
+	int Magic2;
 };
+
+struct ClientReply
+{
+	
+	int Magic;
+	int cnt;
+	struct{
+		int id;
+		int sc;
+	}data[50];
+	int Magic2;
+};
+
+long ServerPendingCnt;
+HANDLE hEvent;
+
+DWORD __stdcall ServerRecvProc(ServerParam* p)
+{
+	
+	for(;;)
+	{
+		char buf[512];
+		ClientReply* cr=(ClientReply*)buf;
+		memset(buf,0,512);
+		int ret = recv(p->sClient, (char*)cr, 512, 0);   
+		if(ret > 0)
+		{
+			if(cr->Magic==0xFEFEFEFE && cr->Magic2==0xAAAABBBB)
+			{
+				for(int i=0;i<cr->cnt;i++)
+				{
+					p->pscore[cr->data[i].id]=cr->data[i].sc;
+					printf("Remote Gene %d : %d\n",cr->data[i].id,cr->data[i].sc);
+				}
+				InterlockedExchangeAdd((LONG volatile *)&ServerPendingCnt,-cr->cnt);
+				if(ServerPendingCnt==0)
+				{
+					SetEvent(hEvent);
+				}
+			}
+			else
+				printf("A package disposed...\n");
+		}
+		else
+			printf("A package too large?\n");
+	}
+}
 
 DWORD __stdcall ServerProc(ServerParam* p)
 {
@@ -485,8 +542,75 @@ void bubble(int d[],int outindex[],int len)
 	}while(flg);
 }
 
-void slave()
+void slave(char* ip,long port)
 {
+	CreatePipes();
+	SOCKET sclient = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if(sclient == INVALID_SOCKET)
+	{
+		printf("invalid socket !");
+		throw ExcBindErr;
+	}
+
+	sockaddr_in serAddr;
+	serAddr.sin_family = AF_INET;
+	serAddr.sin_port = htons(port);
+	serAddr.sin_addr.S_un.S_addr = inet_addr(ip); 
+	if (connect(sclient, (sockaddr *)&serAddr, sizeof(serAddr)) == SOCKET_ERROR)
+	{
+		printf("connect error !");
+		closesocket(sclient);
+		throw ExcBindErr;
+	}
+
+	ClientReply rpy;
+	stack<ServerConfig> Q;
+	for(;;)
+	{
+		ServerConfig sc={0};
+		int cnt=0;
+
+		int ret = recv(sclient, (char*)&sc, sizeof(ServerConfig), 0);
+		if(ret > 0)
+		{
+			if(sc.Magic==132143 && sc.Magic2==21439424)
+			{
+				printf("receiving tasks...\n");
+				cnt++;
+				Q.push(sc);
+			}
+			else
+			{
+				if(sc.Magic==0x90909090)
+				{
+					printf("Go with %d tasks\n",cnt);
+					int ii=0;
+					
+					rpy.Magic=0xFEFEFEFE;rpy.Magic2=0xAAAABBBB;
+					while(!Q.empty())
+					{
+						ServerConfig& cfg=Q.top();
+						int index[2] ={0,1};
+						rpy.data[ii].id =cfg.id;
+						printf("Testing gene : ");print_gene(cfg.dnas,cfg.ndna);
+						int s1=SimulateOneGame(cfg.dnas,cfg.ndna,index);
+
+						index[0]=1;index[1]=0;
+						printf("Testing gene : ");print_gene(cfg.dnas,cfg.ndna);
+						int s2= -SimulateOneGame(cfg.dnas,cfg.ndna,index);
+						printf("score : %d\n",s2);
+						rpy.data[ii].sc =(s1+s2)/2;
+						Q.pop();
+						ii++;
+					}
+					rpy.cnt=ii;
+					send(sclient,(char*)&rpy,sizeof(rpy),0);
+				}
+			}
+
+		}
+	}
+	closesocket(sclient);
 
 }
 
@@ -533,6 +657,15 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 	double** hatchery=(double**)malloc(sizeof(double*)*cnt);
 	int* scores=(int*)malloc(sizeof(int)*cnt);
 	int* sort_index=(int*)malloc(sizeof(int)*cnt);
+
+	HANDLE* hThreads=(HANDLE*)malloc(sizeof(HANDLE)*slaves);
+	for(int i=0;i<slaves;i++)
+	{
+		parm[i].pscore=scores;
+		hThreads[i]=CreateThread(0,0,(LPTHREAD_START_ROUTINE)ServerRecvProc,&parm[i],0,0);
+	}
+	hEvent=CreateEvent(0,FALSE,FALSE,0);
+
 	double *tmp=data;
 	for(int i=0;i<cnt;i++)
 	{
@@ -548,8 +681,9 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 	}
 
 	CreatePipes();
-
+	ServerConfig sc;
 	int s1,s2,j;
+	int slave_rnd=cnt/(slaves+1);
 	for(int rnd=0;rnd<rounds;rnd++)
 	{
 		FILE* fp=fopen("progress.ghp","wb");
@@ -564,7 +698,25 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 		{
 			print_gene(hatchery[i],DNAs);
 		}
-		for(int i=0;i<cnt;i++)
+
+		int ii=0;
+		ServerPendingCnt = slave_rnd * slaves;
+		for(int i=0;i<slaves;i++)
+		{
+			for(int j=0;j<slave_rnd;j++)
+			{
+				sc.Magic=132143;sc.Magic2=21439424;
+				sc.ndna=DNAs;
+				sc.id=j;
+				memcpy(sc.dnas,hatchery[j],DNAs*sizeof(double));
+				send(parm[i].sClient,(char*)&sc,sizeof(sc),0);
+				ii++;
+			}
+			sc.Magic=0x90909090;
+			send(parm[i].sClient,(char*)&sc,sizeof(sc),0);
+		}
+
+		for(int i=ii;i<cnt;i++)
 		{
 			int index[2]={0,1};
 			printf("%d:%d Testing gene : ",rnd,i);print_gene(hatchery[i],DNAs);
@@ -578,6 +730,8 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 			//s2=s1;
 			scores[i]= (s1+s2)/2;
 		}
+		if(slaves)
+			WaitForSingleObject(hEvent,-1);
 		bubble(scores,sort_index,cnt);
 		FILE* outfile=fopen("bests.csv","a+");
 		fprintf(outfile,"%d",rnd);
@@ -598,6 +752,14 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 	free(scores);
 	free(data);
 	free(hatchery);
+	for(int i=0;i<slaves;i++)
+	{
+		TerminateThread(hThreads[i],0);
+		CloseHandle(hThreads[i]);
+		
+	}
+	free(hThreads);
+	CloseHandle(hEvent);
 }
 
 
@@ -618,11 +780,15 @@ int _tmain(int argc, _TCHAR* argv[])
 	srand(time(NULL));
 	if(argc>=3)
 	{
-		if(!wcscmp(argv[1],L"slave"))
+		if(!wcscmp(argv[1],L"slave") && argc==6)
 		{
 			DebugeeExe=argv[2];
 			ReferenceExe=argv[3];
-			slave();
+			char ip[100];
+			sprintf(ip,"%ws",argv[4]);
+			int port=_wtoi(argv[5]);
+			printf("Connecting %s:%d",ip,port);
+			slave(ip,port);
 		}
 		else if (!wcscmp(argv[1],L"master"))
 		{
