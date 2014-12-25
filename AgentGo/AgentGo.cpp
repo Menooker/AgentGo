@@ -341,7 +341,13 @@ class MyGame:public GTPAdapter
 	{
 		int tmp=0;
 		step+=1;
-		memset(total_mark,1000000,sizeof(double)*13*13);
+		for(int i=0;i<13;i++)
+		{
+			for(int j=0;j<13;j++)
+			{
+				total_mark[i][j]=1000000.0;
+			}
+		}
 		if (step>=1 && step<=4)
 		{
 			int takereg[9]={0};
@@ -482,17 +488,14 @@ class MyGame:public GTPAdapter
 				{
 					if(jobs[i][j])
 					{
-						delete jobs[i][j];
-						/*if (bd.checkTrueEye(isW+1,i,j) || bd.data[i][j]!=GO_NULL || bd.checkSuicide(isW+1,i,j))
-						{
-							continue;
-						}*/
 						if (total_mark[i][j]>tmp)
 						{
 							tmp=total_mark[i][j];
 							tmp_i=i;
 							tmp_j=j;
 						}
+						delete jobs[i][j];
+						jobs[i][j]=0;
 					}
 				}
 			}
