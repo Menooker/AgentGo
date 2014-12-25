@@ -55,6 +55,12 @@ public:
 	{
 		DelEvent(mevent);
 	}
+
+	void reset()
+	{
+		ResetEvent(mevent);
+	}
+
 	/*
 	wait for the event occurs.
 	*/
