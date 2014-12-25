@@ -487,14 +487,17 @@ class MyGame:public GTPAdapter
 			{
 				for (int j=0;j<13;++j)
 				{
-					if(jobs[i][j])
+					if (total_mark[i][j]>tmp)
 					{
-						if (total_mark[i][j]>tmp)
+						if (!bd.checkTrueEye(isW+1,i,j) && bd.data[i][j]==GO_NULL && !bd.checkSuicide(isW+1,i,j) && !bd.checkCompete(isW+1,i,j))
 						{
 							tmp=total_mark[i][j];
 							tmp_i=i;
 							tmp_j=j;
 						}
+					}
+					if(jobs[i][j])
+					{
 						delete jobs[i][j];
 						jobs[i][j]=0;
 					}
