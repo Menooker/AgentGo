@@ -463,7 +463,8 @@ class MyGame:public GTPAdapter
 				{
 					for(int j=0;j<13;j++)
 					{
-						if(!can[i+2][j+2] || bd.checkTrueEye(isW+1,i,j) || bd.data[i][j]!=GO_NULL || bd.checkSuicide(isW+1,i,j))
+						if(!can[i+2][j+2] || bd.checkTrueEye(isW+1,i,j) || bd.data[i][j]!=GO_NULL || bd.checkSuicide(isW+1,i,j) 
+							|| bd.checkCompete(isW+1,i,j))
 							continue;
 						jobs[i][j]=new MyJob(bd);
 						jobs[i][j]->i=i;
