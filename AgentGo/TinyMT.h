@@ -627,10 +627,6 @@ public:
 		running=true;
 		//autothread.start(0,TMT_THREAD_LOW);
 		num_active=cnt;
-		for(int i=0;i<cnt;i++)
-		{
-			dprintf("%d %d\n",i,workers[i]->joblist.length());
-		}
 		start_event->notify();
 	}
 
