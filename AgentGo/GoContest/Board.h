@@ -71,6 +71,7 @@ public:
 	Piece getRandomPieceComplex(int agent);
 	bool checkTrueEye(int agent, int row, int col);
 	bool checkSuicide(int agent, int row, int col);
+	inline bool checkCompete(int agent, int row, int col);	// returns true if this place not not allowed for the agent to put ( reserved fot the enemy )
 	void release(); // delete the array pointers
 	
 };
