@@ -28,7 +28,7 @@ typedef struct{
 #define InitEvent() CreateEventW(0,0,0,0)
 #define DelEvent(e) CloseHandle(e)
 #define WaitEvent(e) WaitForSingleObject(e,-1)
-#define WaitEventTimeout(e,t) WaitForSingleObject(e,t)
+#define WaitEventTimeout(e,t) ((WaitForSingleObject(e,t)==WAIT_OBJECT_0)?true:false)
 #define NotifyEvent(e) SetEvent(e)
 #endif
 
@@ -62,9 +62,9 @@ public:
 	wait for the event occurs.
 	param: timeout - timeout for waiting, in milliseconds
 	*/
-	void wait(long timeout)
+	bool wait(long timeout)
 	{
-		WaitEventTimeout(mevent,timeout);
+		return WaitEventTimeout(mevent,timeout);
 	}
 
 	/*
@@ -434,9 +434,9 @@ public:
 	wait for the threads to complete, with timeout 
 	param: millsec - timeout in milliseconds
 	*/
-	void wait(long millsec)
+	bool wait(long millsec)
 	{
-		ev.wait(millsec);
+		return ev.wait(millsec);
 	}
 
 
