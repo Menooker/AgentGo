@@ -333,7 +333,7 @@ Piece Board::getRandomPiece(int agent){
 		if( data[row][col]!=GO_NULL
 			|| checkTrueEye(agent,row,col)  
 			|| checkSuicide(agent,row,col)
-			|| (exist_compete && row==compete[1] && col==compete[2] && agent==compete[0])
+			|| checkCompete(agent,row,col)
 		)
 		{
 			flag = true;
@@ -363,7 +363,7 @@ Piece Board::getRandomPieceComplex(int agent)
 		col = idx % BOARD_SIZE;
 		if( checkTrueEye(agent,row,col)
 			|| checkSuicide(agent,row,col)
-			|| (exist_compete && row==compete[1] && col==compete[2] && agent==compete[0])
+			|| checkCompete(agent,row,col)
 		){
 			addReserve(agent,row,col);
 		}
@@ -479,6 +479,10 @@ bool Board::checkTrueEye(int agent, int row, int col){
 	}
 	else if( count>=2 ) return false;
 	return true;
+}
+
+inline bool Board::checkCompete(int agent, int row, int col){
+	return (exist_compete && row==compete[1] && col==compete[2] && agent==compete[0]);
 }
 
 inline void Board::addReserve(int agent, int row, int col){
