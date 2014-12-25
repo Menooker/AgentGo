@@ -25,7 +25,7 @@ typedef struct{
 #define TMT_THREAD_HIGH THREAD_PRIORITY_HIGHEST
 #define TMT_THREAD_LOW THREAD_PRIORITY_LOWEST
 #define TMT_EVENT HANDLE
-#define InitEvent() CreateEventW(0,0,0,0)
+#define InitEvent(m,i) CreateEventW(0,m,i,0)
 #define DelEvent(e) CloseHandle(e)
 #define WaitEvent(e) WaitForSingleObject(e,-1)
 #define WaitEventTimeout(e,t) ((WaitForSingleObject(e,t)==WAIT_OBJECT_0)?true:false)
@@ -44,7 +44,12 @@ private:
 public:
 	TEvent()
 	{
-		mevent=InitEvent();
+		mevent=InitEvent(0,0);
+	}
+
+	TEvent(long mannual,long init)
+	{
+		mevent=InitEvent(mannual,init);
 	}
 	~TEvent()
 	{
@@ -300,6 +305,7 @@ public:
 	virtual void work(TJob* j)=0;
 	void run()
 	{
+
 		TJob* j;
 		for(;;)
 		{
@@ -330,12 +336,12 @@ public:
 template<typename  T> class Scheduler;
 class SWorker;
 
-
+	
 template<typename  T> class Scheduler
 {
 private:
 	unsigned long num_active;
-
+	TEvent* start_event;
 	TObject endstate;
 	TEvent ev;
 	bool running;
@@ -420,7 +426,13 @@ private:
 		InterlockedDecrement(&num_active);
 	}
 public:
-
+	/*
+	waits for the start command of function 'go()'. For SWorker::run()
+	*/
+	void wait_for_start()
+	{
+		start_event->wait();
+	}
 
 	/*
 	wait for the threads to complete
@@ -529,7 +541,7 @@ public:
 						tmplst.push_back(jl->list.back());
 						jl->list.pop_back();
 					}
-					dprintf(">>>>>>>>>>>>>Steal %d jobs\n",mcnt);
+					dprintf("%d>>>>>>>>>>>>>Steal %d jobs\n",GetCurrentThreadId(),mcnt);
 					jl->leave();
 
 					worker->joblist.enter(); 
@@ -567,6 +579,11 @@ public:
 			workers.push_back(new T());
 			workers.back()->set_scheduler(this);
 		}
+		start_event=new TEvent(1,0);
+		for(unsigned i=0;i<cnt;i++)
+		{
+			workers[i]->start(0);
+		}	
 	}
 
 	Scheduler(int worker_cnt,bool terminate_when_empty)
@@ -591,6 +608,7 @@ public:
 		{
 			delete workers[i];
 		}
+		delete start_event;
 	}
 
 	/*
@@ -603,10 +621,11 @@ public:
 		running=true;
 		//autothread.start(0,TMT_THREAD_LOW);
 		num_active=cnt;
-		for(unsigned i=0;i<cnt;i++)
+		for(int i=0;i<cnt;i++)
 		{
-			workers[i]->start(0);
+			dprintf("%d %d\n",i,workers[i]->joblist.length());
 		}
+		start_event->notify();
 	}
 
 	/*
@@ -725,6 +744,12 @@ public:
 	void set_scheduler(void*  s)
 	{
 		scheduler=(Scheduler<SWorker>*)s;
+	}
+
+	virtual void run()
+	{
+		scheduler->wait_for_start();
+		TWorker::run();
 	}
 
 	virtual void askwork()
