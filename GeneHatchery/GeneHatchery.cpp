@@ -17,8 +17,8 @@ Network Mode Limits:
 */
 
 
-#define MUTATION_RATE 5
-#define MUTATION_PERCENTAGE 0.5
+#define MUTATION_RATE 2
+#define MUTATION_PERCENTAGE 0.3
 
 #define GaIntToChar(i)  ((char)((i<='H'-'A')?i+'A':i+'A'+1))
 #define GaCharToInt(i)  ((int)((i<='h')?i-'a':i-'a'-1))
@@ -382,10 +382,11 @@ int SimulateOneGame(double dna[],int ndna,int index[])
 {
 	WCHAR path[MAX_PATH];
 	wcscpy_s(path,MAX_PATH,DebugeeExe);
+
 	WCHAR fstr[20];
 	for(int i=0;i<ndna;i++)
 	{
-		wsprintf(fstr,L" %f",dna[i]);
+		swprintf(fstr,L" %f",dna[i]);
 		wcscat_s(path,MAX_PATH,fstr);
 	}
 	HANDLE hDebugee=CreateRedirectedProcess(path,0);
@@ -616,7 +617,7 @@ void slave(char* ip,long port)
 
 double mutation(double ori)
 {
-	int go=rand()%99+1;
+	int go=rand()%100+1;
 	double d;
 	if(go<=MUTATION_RATE)
 	{
@@ -674,7 +675,8 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 		{
 			for(int j=0;j<DNAs;j++)
 			{
-				hatchery[i][j]=initDNA[j]*0.75 + initDNA[j]*0.5 / cnt * i;
+				hatchery[i][j]=initDNA[j]*0.75 + initDNA[j]*0.5 / cnt * i ;
+				hatchery[i][j]+= mutation(hatchery[i][j]);
 			}
 		}
 		tmp+=DNAs;
