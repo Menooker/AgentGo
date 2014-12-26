@@ -339,7 +339,8 @@ class MyGame:public GTPAdapter
 	}
 	bool onMove(int isW,int& a,int& b)
 	{
-		int tmp=0;
+		double tmp;
+		bool domove=0;
 		step+=1;
 		for(int i=0;i<13;i++)
 		{
@@ -480,9 +481,27 @@ class MyGame:public GTPAdapter
 			delete psch;
 		
 			/////delete "jobs"
-			tmp=0;
 			int tmp_i;
 			int tmp_j;
+			for (int i=0;i<13;++i)
+			{
+				for (int j=0;j<13;++j)
+				{
+						if (!bd.checkTrueEye(isW+1,i,j) && bd.data[i][j]==GO_NULL && !bd.checkSuicide(isW+1,i,j) && !bd.checkCompete(isW+1,i,j))
+						{
+							tmp=total_mark[i][j];
+							tmp_i=i;
+							tmp_j=j;
+							domove=1;
+							break;
+						}
+				}
+				if (domove)
+				{
+					break;
+				}
+			}
+
 			for (int i=0;i<13;++i)
 			{
 				for (int j=0;j<13;++j)
@@ -506,7 +525,7 @@ class MyGame:public GTPAdapter
 			a=tmp_i;
 			b=tmp_j;
 		}
-		if (tmp>0)
+		if (domove)
 			return true;
 		else
 			return false;
