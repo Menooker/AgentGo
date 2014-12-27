@@ -53,7 +53,6 @@ public:
 
 
 
-
 class MyWorker:public SWorker
 {
 	void work(TJob* j)
@@ -66,7 +65,7 @@ class MyWorker:public SWorker
 		int num_w_2=mj->bd->num_white;
 		int run=2-mj->isWh;
 		int numset=150;
-					//即时利益
+					//即时利益(吃子优化)
 			if (mj->isWh==1)
 			{
 				total_mark[mj->i][mj->j]+=(num_w_2-num_w_1+num_b_1-num_b_2)*index_a;
@@ -75,7 +74,6 @@ class MyWorker:public SWorker
 			{
 				total_mark[mj->i][mj->j]-=(num_w_2-num_w_1+num_b_1-num_b_2)*index_a;
 			}
-
 				//连
 				if (mj->i>=0 && mj->i<=12 && mj->j-1>=0 && mj->j-1<=12 && mj->bd->data[mj->i][mj->j-1]==mj->isWh+1)
 				{
@@ -207,8 +205,101 @@ class MyWorker:public SWorker
 				{
 					total_mark[mj->i][mj->j]-=index_b;
 				}
-
-
+				//点
+				//
+				if (mj->i>=2 && mj->i<=10 && mj->j>=2 && mj->j<=10 && 
+					(  (mj->bd->data[mj->i-2][mj->j]==run && mj->bd->data[mj->i-1][mj->j-1]==run && mj->bd->data[mj->i-1][mj->j+1]==run &&mj->bd->data[mj->i-1][mj->j]==GO_NULL)
+					|| (mj->bd->data[mj->i][mj->j+2]==run && mj->bd->data[mj->i+1][mj->j+1]==run && mj->bd->data[mj->i-1][mj->j+1]==run &&mj->bd->data[mj->i][mj->j+1]==GO_NULL)
+					|| (mj->bd->data[mj->i+1][mj->j+1]==run && mj->bd->data[mj->i+2][mj->j]==run && mj->bd->data[mj->i+1][mj->j-1]==run &&mj->bd->data[mj->i+1][mj->j]==GO_NULL)
+					|| (mj->bd->data[mj->i-1][mj->j-1]==run && mj->bd->data[mj->i][mj->j-2]==run && mj->bd->data[mj->i+1][mj->j-1]==run &&mj->bd->data[mj->i][mj->j-1]==GO_NULL)
+					))
+				{
+					dprintf("i=%d,j=%d,yes\n",mj->i,mj->j);
+					total_mark[mj->i][mj->j]+=500000;
+				}
+				//1
+				if (mj->i==1 && mj->j>=2 && mj->j<=10 && 
+					(  ( 1 && mj->bd->data[mj->i-1][mj->j-1]==run && mj->bd->data[mj->i-1][mj->j+1]==run &&mj->bd->data[mj->i-1][mj->j]==GO_NULL)
+					|| (mj->bd->data[mj->i][mj->j+2]==run && mj->bd->data[mj->i+1][mj->j+1]==run && mj->bd->data[mj->i-1][mj->j+1]==run &&mj->bd->data[mj->i][mj->j+1]==GO_NULL)
+					|| (mj->bd->data[mj->i+1][mj->j+1]==run && mj->bd->data[mj->i+2][mj->j]==run && mj->bd->data[mj->i+1][mj->j-1]==run &&mj->bd->data[mj->i+1][mj->j]==GO_NULL)
+					|| (mj->bd->data[mj->i-1][mj->j-1]==run && mj->bd->data[mj->i][mj->j-2]==run && mj->bd->data[mj->i+1][mj->j-1]==run &&mj->bd->data[mj->i][mj->j-1]==GO_NULL)
+					))
+				{
+					dprintf("i=%d,j=%d,yes\n",mj->i,mj->j);
+					total_mark[mj->i][mj->j]+=500000;
+				}
+				if (mj->i==11 && mj->j>=2 && mj->j<=10 && 
+					(  (mj->bd->data[mj->i-2][mj->j]==run && mj->bd->data[mj->i-1][mj->j-1]==run && mj->bd->data[mj->i-1][mj->j+1]==run &&mj->bd->data[mj->i-1][mj->j]==GO_NULL)
+					|| (mj->bd->data[mj->i][mj->j+2]==run && mj->bd->data[mj->i+1][mj->j+1]==run && mj->bd->data[mj->i-1][mj->j+1]==run &&mj->bd->data[mj->i][mj->j+1]==GO_NULL)
+					|| (mj->bd->data[mj->i+1][mj->j+1]==run && 1 && mj->bd->data[mj->i+1][mj->j-1]==run &&mj->bd->data[mj->i+1][mj->j]==GO_NULL)
+					|| (mj->bd->data[mj->i-1][mj->j-1]==run && mj->bd->data[mj->i][mj->j-2]==run && mj->bd->data[mj->i+1][mj->j-1]==run &&mj->bd->data[mj->i][mj->j-1]==GO_NULL)
+					))
+				{
+					dprintf("i=%d,j=%d,yes\n",mj->i,mj->j);
+					total_mark[mj->i][mj->j]+=500000;
+				}
+				if (mj->i>=2 && mj->i<=10 && mj->j==1 && 
+					(  (mj->bd->data[mj->i-2][mj->j]==run && mj->bd->data[mj->i-1][mj->j-1]==run && mj->bd->data[mj->i-1][mj->j+1]==run &&mj->bd->data[mj->i-1][mj->j]==GO_NULL)
+					|| (mj->bd->data[mj->i][mj->j+2]==run && mj->bd->data[mj->i+1][mj->j+1]==run && mj->bd->data[mj->i-1][mj->j+1]==run &&mj->bd->data[mj->i][mj->j+1]==GO_NULL)
+					|| (mj->bd->data[mj->i+1][mj->j+1]==run && mj->bd->data[mj->i+2][mj->j]==run && mj->bd->data[mj->i+1][mj->j-1]==run &&mj->bd->data[mj->i+1][mj->j-1]==GO_NULL)
+					|| (mj->bd->data[mj->i-1][mj->j-1]==run && 1 && mj->bd->data[mj->i+1][mj->j-1]==run &&mj->bd->data[mj->i][mj->j]==GO_NULL)
+					))
+				{
+					dprintf("i=%d,j=%d,yes\n",mj->i,mj->j);
+					total_mark[mj->i][mj->j]+=500000;
+				}
+				if (mj->i>=2 && mj->i<=10 && mj->j==11 && 
+					(  (mj->bd->data[mj->i-2][mj->j]==run && mj->bd->data[mj->i-1][mj->j-1]==run && mj->bd->data[mj->i-1][mj->j+1]==run &&mj->bd->data[mj->i-1][mj->j]==GO_NULL)
+					|| (1 && mj->bd->data[mj->i+1][mj->j+1]==run && mj->bd->data[mj->i-1][mj->j+1]==run &&mj->bd->data[mj->i][mj->j+1]==GO_NULL)
+					|| (mj->bd->data[mj->i+1][mj->j+1]==run && mj->bd->data[mj->i+2][mj->j]==run && mj->bd->data[mj->i+1][mj->j-1]==run &&mj->bd->data[mj->i+1][mj->j]==GO_NULL)
+					|| (mj->bd->data[mj->i-1][mj->j-1]==run && mj->bd->data[mj->i][mj->j-2]==run && mj->bd->data[mj->i+1][mj->j-1]==run &&mj->bd->data[mj->i][mj->j-1]==GO_NULL)
+					))
+				{
+					dprintf("i=%d,j=%d,yes\n",mj->i,mj->j);
+					total_mark[mj->i][mj->j]+=500000;
+				}
+				//0
+				if (mj->i==0 && mj->j>=2 && mj->j<=10 && 
+					(  ( 0)
+					|| (mj->bd->data[mj->i][mj->j+2]==run && mj->bd->data[mj->i+1][mj->j+1]==run && 1 &&mj->bd->data[mj->i][mj->j+1]==GO_NULL)
+					|| (mj->bd->data[mj->i+1][mj->j+1]==run && mj->bd->data[mj->i+2][mj->j]==run && mj->bd->data[mj->i+1][mj->j-1]==run &&mj->bd->data[mj->i+1][mj->j]==GO_NULL)
+					|| (1 && mj->bd->data[mj->i][mj->j-2]==run && mj->bd->data[mj->i+1][mj->j-1]==run &&mj->bd->data[mj->i][mj->j-1]==GO_NULL)
+					))
+				{
+					dprintf("i=%d,j=%d,yes\n",mj->i,mj->j);
+					total_mark[mj->i][mj->j]+=500000;
+				}
+				if (mj->i==12 && mj->j>=2 && mj->j<=10 && 
+					(  (mj->bd->data[mj->i-2][mj->j]==run && mj->bd->data[mj->i-1][mj->j-1]==run && mj->bd->data[mj->i-1][mj->j+1]==run&&mj->bd->data[mj->i-1][mj->j]==GO_NULL)
+					|| (mj->bd->data[mj->i][mj->j+2]==run && 1 && mj->bd->data[mj->i-1][mj->j+1]==run&&mj->bd->data[mj->i][mj->j+1]==GO_NULL)
+					|| (0)
+					|| (mj->bd->data[mj->i-1][mj->j-1]==run && mj->bd->data[mj->i][mj->j-2]==run && 1&&mj->bd->data[mj->i][mj->j-1]==GO_NULL)
+					))
+				{
+					dprintf("i=%d,j=%d,yes\n",mj->i,mj->j);
+					total_mark[mj->i][mj->j]+=500000;
+				}
+				if (mj->i>=2 && mj->i<=10 && mj->j==0 && 
+					(  (mj->bd->data[mj->i-2][mj->j]==run && 1 && mj->bd->data[mj->i-1][mj->j+1]==run &&mj->bd->data[mj->i-1][mj->j]==GO_NULL)
+					|| (mj->bd->data[mj->i][mj->j+2]==run && mj->bd->data[mj->i+1][mj->j+1]==run && mj->bd->data[mj->i-1][mj->j+1]==run &&mj->bd->data[mj->i][mj->j+1]==GO_NULL)
+					|| (mj->bd->data[mj->i+1][mj->j+1]==run && mj->bd->data[mj->i+2][mj->j]==run && 1 &&mj->bd->data[mj->i+1][mj->j]==GO_NULL)
+					|| (0)
+					))
+				{
+					dprintf("i=%d,j=%d,yes\n",mj->i,mj->j);
+					total_mark[mj->i][mj->j]+=500000;
+				}
+				if (mj->i>=2 && mj->i<=10 && mj->j==12 && 
+					(  (mj->bd->data[mj->i-2][mj->j]==run && mj->bd->data[mj->i-1][mj->j-1]==run && 1 &&mj->bd->data[mj->i-1][mj->j]==GO_NULL)
+					|| (0)
+					|| (1 && mj->bd->data[mj->i+2][mj->j]==run && mj->bd->data[mj->i+1][mj->j-1]==run &&mj->bd->data[mj->i+1][mj->j]==GO_NULL)
+					|| (mj->bd->data[mj->i-1][mj->j-1]==run && mj->bd->data[mj->i][mj->j-2]==run && mj->bd->data[mj->i+1][mj->j-1]==run &&mj->bd->data[mj->i][mj->j-1]==GO_NULL)
+					))
+				{
+					dprintf("i=%d,j=%d,yes\n",mj->i,mj->j);
+					total_mark[mj->i][mj->j]+=500000;
+				}
+				//
 		Board bdnew(mj->bd);
 		for (int ii=0;ii<numset;++ii)
 		{
@@ -222,8 +313,6 @@ class MyWorker:public SWorker
 				while (white_go || black_go)
 				{
 					Piece rand;
-					//mj->bd->print();
-					//AG_PANIC();
 					rand=mj->bd->getRandomPiece(GO_BLACK);
 					if (!rand.isEmpty())
 					{
@@ -506,6 +595,7 @@ class MyGame:public GTPAdapter
 			{
 				for (int j=0;j<13;++j)
 				{
+					//dprintf("i=%d,j=%d mark=%f\n",i,j,total_mark[i][j]);//////////////////////////////////////////////////////////////////////////////////
 					if (total_mark[i][j]>tmp)
 					{
 						if (!bd.checkTrueEye(isW+1,i,j) && bd.data[i][j]==GO_NULL && !bd.checkSuicide(isW+1,i,j) && !bd.checkCompete(isW+1,i,j))

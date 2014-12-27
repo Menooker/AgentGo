@@ -59,6 +59,13 @@ void GTPAdapter::MainLoop()
 				time0=clock()-time0;
 				avgtime=(avgtime*times + time0)/(times+1);
 				this->times++;
+				for (int i=a;i<a+5;++i)
+				{
+					for (int j=b;j<b+5;++j)
+					{
+						can[i][j]=1;
+					}
+				}
 				dprintf("genmove a= %d ,b= %d ,curtime= %d ,avgtime= %f ms\n",a,b,time0,avgtime);
 #else
 				dprintf("genmove a= %d ,b= %d\n",a,b);
