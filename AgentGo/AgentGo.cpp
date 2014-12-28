@@ -318,13 +318,25 @@ class MyWorker:public SWorker
 class MyGame:public GTPAdapter
 {
 	int step;
+	bool can[17][17];
 	void onClear()
 	{
+		memset(can,0,sizeof(bool)*17*17);
 		step=0;
 	}
 	void onBoardSize(int sz)
 	{
 	
+	}
+	void onMoved(int isW,int a,int b)
+	{
+		for (int i=a;i<a+5;++i)
+		{
+			for (int j=b;j<b+5;++j)
+			{
+				can[i][j]=1;
+			}
+		}
 	}
 	void onPlay(int isW,int a,int b)
 	{
@@ -474,7 +486,6 @@ class MyGame:public GTPAdapter
 						psch->submit(jobs[i][j],1);
 					}
 				}
-
 			/////run the threads and wait for the work completes
 			psch->go();
 			psch->wait();

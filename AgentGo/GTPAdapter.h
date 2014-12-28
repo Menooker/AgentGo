@@ -16,12 +16,11 @@ private:
 	virtual void onBoardSize(int sz){}
 	virtual void onPlay(int isW,int a,int b)=0;
 	virtual bool onMove(int isW,int& a,int&b)=0;
+	virtual void onMoved(int isW,int a,int b)=0;
 public:
-	bool can[17][17];
 	void MainLoop();
 	GTPAdapter()
 	{
-		memset(can,0,sizeof(bool)*17*17);
 		avgtime=0;times=0;
 	}
 };
