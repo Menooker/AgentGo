@@ -43,12 +43,14 @@ void GTPAdapter::MainLoop()
 			if(color=='w')
 			{
 				played=this->onMove(1,a,b);
-				onMoved(1,a,b);
+				if(played)
+					onMoved(1,a,b);
 			}
 			else if(color=='b')
 			{
 				played=this->onMove(0,a,b);
-				onMoved(0,a,b);
+				if(played)
+					onMoved(0,a,b);
 			}
 			else
 			{
