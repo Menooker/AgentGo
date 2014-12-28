@@ -43,10 +43,12 @@ void GTPAdapter::MainLoop()
 			if(color=='w')
 			{
 				played=this->onMove(1,a,b);
+				onMoved(1,a,b);
 			}
 			else if(color=='b')
 			{
 				played=this->onMove(0,a,b);
+				onMoved(0,a,b);
 			}
 			else
 			{
@@ -59,13 +61,6 @@ void GTPAdapter::MainLoop()
 				time0=clock()-time0;
 				avgtime=(avgtime*times + time0)/(times+1);
 				this->times++;
-				for (int i=a;i<a+5;++i)
-				{
-					for (int j=b;j<b+5;++j)
-					{
-						can[i][j]=1;
-					}
-				}
 				dprintf("genmove a= %d ,b= %d ,curtime= %d ,avgtime= %f ms\n",a,b,time0,avgtime);
 #else
 				dprintf("genmove a= %d ,b= %d\n",a,b);
