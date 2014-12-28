@@ -92,7 +92,7 @@ DWORD __stdcall ServerRecvProc(ServerParam* p)
 					printf("Remote Gene %d : %d\n",cr->data[i].id,cr->data[i].sc);
 				}
 				InterlockedExchangeAdd((LONG volatile *)&ServerPendingCnt,-cr->cnt);
-				if(ServerPendingCnt==0)
+				if(ServerPendingCnt<=0)
 				{
 					SetEvent(hEvent);
 				}
@@ -676,8 +676,9 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 			for(int j=0;j<DNAs;j++)
 			{
 				hatchery[i][j]=initDNA[j]*0.75 + initDNA[j]*0.5 / cnt * i ;
-				hatchery[i][j]+= mutation(hatchery[i][j]);
 			}
+			if(i>0)
+				mate(hatchery[i],hatchery[i-1],hatchery[i],DNAs);
 		}
 		tmp+=DNAs;
 	}
@@ -767,7 +768,8 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 
 void param_abort()
 {
-	printf("Bad parameters!\n");
+	printf("Bad parameters!\nusage for master mode:\nGeneHatchery master [-f {path to saved records}] [-s {slaves}] [-r {generations}] [-c {competitors}] [-d {DNAs dna0 dna1 dna2...}]\n");
+	printf("usage for slave mode:\nGeneHatchery slave {master ip} {port}");
 	exit(-1);
 }
 //-f progress.ghp
@@ -879,6 +881,8 @@ int _tmain(int argc, _TCHAR* argv[])
 			else
 				param_abort();
 		}
+		else
+			param_abort();
 	}
 	else
 	{
