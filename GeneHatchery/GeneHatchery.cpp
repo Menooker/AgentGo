@@ -100,8 +100,26 @@ DWORD __stdcall ServerRecvProc(ServerParam* p)
 			else
 				printf("A package disposed...\n");
 		}
-		else
-			printf("A package too large?\n");
+		else 
+		{
+			int err=WSAGetLastError();
+			switch(err)
+			{
+			case WSAENETRESET:
+			case WSAECONNRESET:
+				printf("Connection down! port:%d\n",p->port);
+				return 0;
+				break;
+			case WSAEMSGSIZE:
+				printf("too large a package! port:%d\n",p->port);
+				break;
+			default:
+				printf("unknown error %d! port:%d\n",err,p->port);
+				return 0;
+				break;
+			}
+		}
+			
 	}
 }
 
@@ -566,10 +584,11 @@ void slave(char* ip,long port)
 
 	ClientReply rpy;
 	stack<ServerConfig> Q;
+	int cnt=0;
 	for(;;)
 	{
 		ServerConfig sc={0};
-		int cnt=0;
+
 
 		int ret = recv(sclient, (char*)&sc, sizeof(ServerConfig), 0);
 		if(ret > 0)
@@ -579,11 +598,15 @@ void slave(char* ip,long port)
 				printf("receiving tasks...\n");
 				cnt++;
 				Q.push(sc);
+				printf("%d:",sc.id);
+				print_gene(sc.dnas,sc.ndna);
+				
 			}
 			else
 			{
 				if(sc.Magic==0x90909090)
 				{
+					//MessageBox(0,L"K",L"",64);
 					printf("Go with %d tasks\n",cnt);
 					int ii=0;
 					
@@ -710,13 +733,14 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 			{
 				sc.Magic=132143;sc.Magic2=21439424;
 				sc.ndna=DNAs;
-				sc.id=j;
-				memcpy(sc.dnas,hatchery[j],DNAs*sizeof(double));
+				sc.id=ii;
+				memcpy(sc.dnas,hatchery[ii],DNAs*sizeof(double));
 				send(parm[i].sClient,(char*)&sc,sizeof(sc),0);
 				ii++;
 			}
 			sc.Magic=0x90909090;
 			send(parm[i].sClient,(char*)&sc,sizeof(sc),0);
+			//MessageBox(0,L"K",L"",64);
 		}
 
 		for(int i=ii;i<cnt;i++)
