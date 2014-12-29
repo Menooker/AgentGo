@@ -71,13 +71,13 @@
     <ClCompile Include="GTPAdapter.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="DbgPipe.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="CpuCount.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="GoContest\Board.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DbgPipe.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="GoContest\Piece.cpp">
