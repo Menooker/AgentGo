@@ -491,7 +491,7 @@ int SimulateOneGame(double dna[],int ndna,int index[])
 					//bd.print();
 					lastwplay=true;
 				}
-
+				Sleep(250);
 
 			}
 			//bd.print();
