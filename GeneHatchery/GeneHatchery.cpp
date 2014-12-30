@@ -629,6 +629,7 @@ void slave(char* ip,long port)
 						ii++;
 					}
 					rpy.cnt=ii;
+					cnt=0;
 					send(sclient,(char*)&rpy,sizeof(rpy),0);
 				}
 			}
