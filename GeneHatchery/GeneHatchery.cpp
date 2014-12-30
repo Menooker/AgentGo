@@ -552,9 +552,9 @@ void bubble(int d[],int outindex[],int len)
 		{
 			if(d[outindex[i]]<d[outindex[i+1]])
 			{
-				tmp=d[outindex[i]];
-				d[outindex[i]]=d[outindex[i+1]];
-				d[outindex[i+1]]=tmp;
+				tmp=outindex[i];
+				outindex[i]=outindex[i+1];
+				outindex[i+1]=tmp;
 				flg=1;
 			}
 		}
@@ -618,6 +618,7 @@ void slave(char* ip,long port)
 						rpy.data[ii].id =cfg.id;
 						printf("Testing gene : ");print_gene(cfg.dnas,cfg.ndna);
 						int s1=SimulateOneGame(cfg.dnas,cfg.ndna,index);
+						printf("score : %d\n",s1);
 
 						index[0]=1;index[1]=0;
 						printf("Testing gene : ");print_gene(cfg.dnas,cfg.ndna);
@@ -663,7 +664,7 @@ void mate(double f[],double m[],double s[],int DNAs)
 		s[i]=t+mutation(t);
 	}
 }
-
+//master "AgentGo_AI.exe" "C:\Users\Menooker\Desktop\Go\gnugo-3.8\gnugo.exe --mode gtp --level 1"  -d3 1000 1 1 -s 2 -c 6 -r 10
 void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* olddata,ServerParam* parm)
 {
 	printf("Slaves: %d, DNAs: %d\n",slaves,DNAs);
@@ -710,6 +711,7 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 	ServerConfig sc;
 	int s1,s2,j;
 	int slave_rnd=cnt/(slaves+1);
+	FILE* outfile=fopen("bests.csv","a+");
 	for(int rnd=0;rnd<rounds;rnd++)
 	{
 		FILE* fp=fopen("progress.ghp","wb");
@@ -760,21 +762,22 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 		if(slaves)
 			WaitForSingleObject(hEvent,-1);
 		bubble(scores,sort_index,cnt);
-		FILE* outfile=fopen("bests.csv","a+");
+
 		fprintf(outfile,"%d",rnd);
 		for(int i=0;i<DNAs;i++)
 		{
 			fprintf(outfile,",%f",hatchery[sort_index[0]][i]);
 		}
 		fprintf(outfile,",%d\n",scores[sort_index[0]]);
-		fclose(outfile);
+
 		for(int i=cnt/2;i<cnt;i++)
 		{
 			j=i-cnt/2;
-			mate(hatchery[j],hatchery[j+1],hatchery[i],DNAs);	
+			mate(hatchery[sort_index[j]],hatchery[sort_index[j+1]],hatchery[sort_index[i]],DNAs);	
 		}
 
 	}
+	fclose(outfile);
 	free(sort_index);
 	free(scores);
 	free(data);
