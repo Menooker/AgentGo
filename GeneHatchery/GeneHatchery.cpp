@@ -14,6 +14,8 @@
 Network Mode Limits:
 50 genes with 10 DNA positions
 
+//master "AgentGo_AI.exe" "C:\Users\Menooker\Desktop\Go\gnugo-3.8\gnugo.exe --mode gtp --level 1"  -d3 1000 1 1 -s 2 -c 6 -r 10 -f progress.ghp
+//slave "AgentGo_AI.exe" "C:\Users\Menooker\Desktop\Go\gnugo-3.8\gnugo.exe --mode gtp --level 1" 12.34.5.6 3000
 */
 
 
@@ -665,7 +667,7 @@ void mate(double f[],double m[],double s[],int DNAs)
 		s[i]=t+mutation(t);
 	}
 }
-//master "AgentGo_AI.exe" "C:\Users\Menooker\Desktop\Go\gnugo-3.8\gnugo.exe --mode gtp --level 1"  -d3 1000 1 1 -s 2 -c 6 -r 10
+
 void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* olddata,ServerParam* parm)
 {
 	printf("Slaves: %d, DNAs: %d\n",slaves,DNAs);
