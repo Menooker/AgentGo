@@ -18,7 +18,9 @@ class Board
 {
 private:
 	// Variables
+	inline int getIdxS(int row,int col);  // safely get idx
 	SetNode set_nodes[BOARD_SIZE*BOARD_SIZE];
+	bool goodplace[BOARD_SIZE*BOARD_SIZE][2];
 	bool game_ending;
 
 	// Functions
@@ -27,6 +29,8 @@ private:
 	void killSetNode(SetNode* sn);
 	inline void addReserve(int agent, int row, int col);
 	inline void resetReserve();
+	void updateGoodPlace(int agent,int row,int col);
+	inline bool checkGoodPlace(int agent,int row,int col);
 
 public:
 	// Variables

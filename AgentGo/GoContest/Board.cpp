@@ -19,6 +19,11 @@ Board::~Board(void)
 	release();
 }
 
+inline int Board::getIdxS(int row,int col){
+	if( row<0 || col<0 || row>=BOARD_SIZE || col>=BOARD_SIZE) return -1;
+	else return (row*BOARD_SIZE+col);
+}
+
 void Board::clear(){
 	int i,j;
 	for( i=0; i<BOARD_SIZE; i++ ){
@@ -28,6 +33,7 @@ void Board::clear(){
 		}
 	}
 	for ( i=0; i<BOARD_SIZE*BOARD_SIZE; i++){
+		set_nodes[i].clear();
 		set_nodes[i].clear();
 	}
 	#ifdef	GO_HISTORY	
@@ -40,6 +46,7 @@ void Board::clear(){
 	for ( i=0; i<BOARD_SIZE*BOARD_SIZE; i++){
 		space_list[i][0]=i-1;
 		space_list[i][1]=i+1;
+		goodplace[i][0] = goodplace[i][1];
 		reserve[i] = 0;
 	}
 	space_list[0][0] = 0;
@@ -156,6 +163,7 @@ bool Board::put(int agent,int row,int col){
 	SetNode* snself = getSet(i,j);
 	snself->hp += hp;
 	if( snself->hp == 0 ) killSetNode(snself);
+	else updateGoodPlace(agent,i,j);
 
 	#ifdef GO_BOARD_TIME
 		time_put += clock()-cl;
@@ -214,6 +222,8 @@ void Board::clone(const Board &board){
 	for ( i=0; i<BOARD_SIZE*BOARD_SIZE; i++){
 		space_list[i][0] = board.space_list[i][0];
 		space_list[i][1] = board.space_list[i][1];
+		goodplace[i][0] = board.goodplace[i][0];
+		goodplace[i][1] = board.goodplace[i][1];
 		reserve[i] = board.reserve[i];
 	}
 	space_head = board.space_head;
@@ -496,4 +506,55 @@ inline void Board::resetReserve(){
 	reserve_total = 0;
 	memset(reserve,0,BOARD_SIZE*BOARD_SIZE*sizeof(bool));
 	return;
+}
+
+void Board::updateGoodPlace(int agent,int row,int col){
+	int cand[30];
+	// chang or peng
+	cand[0] = getIdxS(row-1,col);
+	cand[1] = getIdxS(row,col-1);
+	cand[2] = getIdxS(row+1,col);
+	cand[3] = getIdxS(row,col+1);
+	// jian
+	cand[4] = getIdxS(row-1,col-1);
+	cand[5] = getIdxS(row-1,col+1);
+	cand[6] = getIdxS(row+1,col-1);
+	cand[7] = getIdxS(row+1,col+1);
+	// xiaofei or gua
+	cand[8] = getIdxS(row-2,col-1);
+	cand[9] = getIdxS(row-1,col-2);
+	cand[10] = getIdxS(row+1,col-2);
+	cand[11] = getIdxS(row+2,col-1);
+	cand[12] = getIdxS(row+2,col+1);
+	cand[13] = getIdxS(row+1,col+2);
+	cand[14] = getIdxS(row-1,col+2);
+	cand[15] = getIdxS(row-2,col+1);
+	// dafei or dagua
+	cand[16] = getIdxS(row-3,col-1);
+	cand[17] = getIdxS(row-1,col-3);
+	cand[18] = getIdxS(row+1,col-3);
+	cand[19] = getIdxS(row+3,col-1);
+	cand[20] = getIdxS(row+3,col+1);
+	cand[21] = getIdxS(row+1,col+3);
+	cand[22] = getIdxS(row-1,col+3);
+	cand[23] = getIdxS(row-3,col+1);
+	// guan
+	cand[24] = getIdxS(row-2,col);
+	cand[25] = getIdxS(row,col-2);
+	cand[26] = getIdxS(row+2,col);
+	cand[27] = getIdxS(row,col+2);
+	for (int i=0; i<24; i++) {
+		if( cand[i]>=0 ){
+			goodplace[cand[i]][0] = goodplace[cand[i]][1] = 1;
+		}
+	}
+	for (int i=24; i<28; i++) {
+		if( cand[i]>=0 ){
+			goodplace[cand[i]][agent-1] = 1;
+		}
+	}
+}
+
+inline bool Board::checkGoodPlace(int agent,int row,int col){
+	return goodplace[row*BOARD_SIZE+col][agent-1];
 }
