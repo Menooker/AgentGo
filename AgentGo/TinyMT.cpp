@@ -94,12 +94,29 @@ namespace TinyMT
 		ResumeThread(this->tid.h);
 #endif
 	}
+
+	bool TThread::alive()
+	{
+#ifdef TMT_ON_WINDOWS
+		DWORD r;
+		if(GetExitCodeThread(tid.h ,&r))
+		{
+			return (r==STILL_ACTIVE);
+		}
+		else
+			return false;
+#endif
+	}
+
 	void TThread::stop()
 	{
 		ReturnIfNullThread();
-		this->closethread();
+		tid.id=0;
 #ifdef TMT_ON_WINDOWS
-		TerminateThread(this->tid.h,0);
+		if(!TerminateThread(this->tid.h,0))
+		{
+			dprintf("error when ending thread : %d\n",GetLastError());
+		}
 #endif
 		
 	}

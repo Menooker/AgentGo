@@ -319,6 +319,27 @@ class MyGame:public GTPAdapter
 {
 	int step;
 	bool can[17][17];
+	void boundedWaiting(Scheduler<MyWorker>* psch)
+	{
+			if(!psch->wait(5000))
+			{
+				dprintf("Wait time expired\n");
+				psch->abort();
+				if(!psch->wait(1000))
+				{
+					psch->end();
+					dprintf("Abort time expired\n");
+					for(int cc=0;cc<10;cc++)
+					{
+						if(!psch->all_threads_dead())
+							Sleep(70);
+						else
+							break;
+					}
+				}
+			}
+	}
+
 	void onClear()
 	{
 		memset(can,0,sizeof(bool)*17*17);
