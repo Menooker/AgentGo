@@ -198,7 +198,7 @@ protected:
 	bool isLazy;
 public:
 	void lazy(); //set priority to lowest
-
+	bool alive();
 	void restore(); //restore the priority before lazy()
 	void closethread()
 	{
@@ -327,6 +327,8 @@ public:
 				}
 				j=joblist.fetch();
 				joblist.leave();
+				if(babort) 
+					return;
 				work(j);
 				//delete j;
 			}
@@ -432,6 +434,17 @@ private:
 		InterlockedDecrement(&num_active);
 	}
 public:
+
+	bool all_threads_dead()
+	{
+		for(unsigned i=0;i<cnt;i++)
+		{
+			if(workers[i]->alive())
+				return false;
+		}
+		return true;
+	}
+
 	/*
 	waits for the start command of function 'go()'. For SWorker::run()
 	*/
