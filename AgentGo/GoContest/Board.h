@@ -10,7 +10,7 @@
 #define MAX_HISTORY_LENGTH	1000
 
 #define SPACE_HEAD_NULL		(-1)
-#define ENDING_THRESHOLD    70
+#define ENDING_THRESHOLD    100
 
 using namespace std;
 
@@ -21,6 +21,7 @@ private:
 	inline int getIdxS(int row,int col);  // safely get idx
 	SetNode set_nodes[BOARD_SIZE*BOARD_SIZE];
 	bool goodplace[BOARD_SIZE*BOARD_SIZE][2];
+	int distance[BOARD_SIZE*BOARD_SIZE][2];
 	bool game_ending;
 
 	// Functions
@@ -31,6 +32,9 @@ private:
 	inline void resetReserve();
 	void updateGoodPlace(int agent,int row,int col);
 	inline bool checkGoodPlace(int agent,int row,int col);
+	void updateDistance(int agent,int row,int col);
+	void setDistance(int agent,int row,int col,int dist);
+	inline bool checkDistFar(int agent,int row,int col);
 
 public:
 	// Variables
@@ -69,6 +73,7 @@ public:
 	bool put(const Piece &piece);
 	void pass(int agent);
 	Piece getPiece(int row,int col);
+	Piece getPieceS(int row,int col);
 	void print();
 	void clone(const Board &board);
 	Piece getRandomPiece(int agent);

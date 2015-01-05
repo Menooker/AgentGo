@@ -15,7 +15,7 @@ using namespace TinyMT;
 TinyOP<Board> boardpool(1000);
 
 double total_mark[13][13];
-double index_a=1000;
+double index_a=100000;
 double index_b=1;
 double index_c=1;
 class MyObject: public TObject
@@ -61,11 +61,28 @@ class MyWorker:public SWorker
 		MyJob* mj=(MyJob*)j;
 		int num_b_1=mj->bd->num_black;
 		int num_w_1=mj->bd->num_white;
-		mj->bd->put(mj->isWh+1,mj->i,mj->j);
+		int run=2-mj->isWh;
+		int own=mj->isWh+1; 
+		Board newbd;
+		newbd.clone(mj->bd);
+		newbd.put(run,mj->i,mj->j);
+		int num_b_3=newbd.num_black;
+		int num_w_3=newbd.num_white;
+		mj->bd->put(own,mj->i,mj->j);
 		int num_b_2=mj->bd->num_black;
 		int num_w_2=mj->bd->num_white;
-		int run=2-mj->isWh;
 		int numset=150;
+		double num_a=1/(10-0.05*mj->bd->num_black-0.05*mj->bd->num_white);
+		double num_b=0.6-0.1/60*(mj->bd->num_black+mj->bd->num_white);
+		//dprintf("%d %d",num_a,num_b);
+		double amaf[10];
+		for( int k=0;k<10;k++){
+			amaf[k] = 1.0/(k+1);
+			//amaf[k] = 1-pow(num_a*(k+1-1),num_b);
+			if ( amaf[k]<0 ) amaf[k]=0;
+			//dprintf("%d ",amaf[k]);
+		}
+		//dprintf("\n");
 					//即时利益
 			if (mj->isWh==1)
 			{
@@ -74,6 +91,16 @@ class MyWorker:public SWorker
 			else
 			{
 				total_mark[mj->i][mj->j]-=(num_w_2-num_w_1+num_b_1-num_b_2)*index_a;
+			}
+			if (mj->isWh==1)
+			{
+				if (num_w_3<num_w_1)
+					total_mark[mj->i][mj->j]+=(num_w_1-num_w_3)*index_a;
+			}
+			else
+			{
+				if (num_b_3<num_b_1)
+					total_mark[mj->i][mj->j]+=(num_b_1-num_b_3)*index_a;
 			}
 
 				//连
@@ -207,7 +234,48 @@ class MyWorker:public SWorker
 				{
 					total_mark[mj->i][mj->j]-=index_b;
 				}
-
+		///断
+		if (mj->i-1>=0 && mj->i+1<=12 && mj->j-1>=0 && mj->j+1<=12
+			&& ((mj->bd->data[mj->i][mj->j+1]==own || mj->bd->data[mj->i][mj->j-1]==own) ||
+			(mj->bd->data[mj->i-1][mj->j+1]==own && mj->bd->data[mj->i-1][mj->j-1]==own) ||
+			(mj->bd->data[mj->i+1][mj->j+1]==own && mj->bd->data[mj->i+1][mj->j-1]==own)
+			)
+			&& mj->bd->data[mj->i-1][mj->j]==run && mj->bd->data[mj->i+1][mj->j]==run)
+		{
+			total_mark[mj->i][mj->j]+=index_b*20;
+		}
+		if (mj->i-1>=0 && mj->i+1<=12 && mj->j-1>=0 && mj->j+1<=12
+			&& ((mj->bd->data[mj->i-1][mj->j]==own || mj->bd->data[mj->i+1][mj->j]==own) ||
+			(mj->bd->data[mj->i-1][mj->j+1]==own && mj->bd->data[mj->i+1][mj->j+1]==own) ||
+			(mj->bd->data[mj->i-1][mj->j-1]==own && mj->bd->data[mj->i+1][mj->j-1]==own)
+			)&& mj->bd->data[mj->i][mj->j+1]==run && mj->bd->data[mj->i][mj->j-1]==run)
+		{
+			total_mark[mj->i][mj->j]+=index_b*20;
+		}
+		if (mj->i-1>=0 && mj->i+1<=12 && mj->j-1>=0 && mj->j+1<=12 &&
+			mj->bd->data[mj->i+1][mj->j+1]==own && mj->bd->data[mj->i+1][mj->j]==run && mj->bd->data[mj->i][mj->j+1]==run &&
+			(mj->bd->data[mj->i][mj->j-1]==own||(mj->bd->data[mj->i-1][mj->j]==own)))
+		{
+			total_mark[mj->i][mj->j]+=index_b*20;
+		}
+		if (mj->i-1>=0 && mj->i+1<=12 && mj->j-1>=0 && mj->j+1<=12 &&
+			mj->bd->data[mj->i-1][mj->j+1]==own && mj->bd->data[mj->i-1][mj->j]==run && mj->bd->data[mj->i][mj->j+1]==run &&
+			(mj->bd->data[mj->i][mj->j-1]==own||(mj->bd->data[mj->i+1][mj->j]==own)))
+		{
+			total_mark[mj->i][mj->j]+=index_b*20;
+		}
+		if (mj->i-1>=0 && mj->i+1<=12 && mj->j-1>=0 && mj->j+1<=12 &&
+			mj->bd->data[mj->i+1][mj->j-1]==own && mj->bd->data[mj->i+1][mj->j]==run && mj->bd->data[mj->i][mj->j-1]==run &&
+			(mj->bd->data[mj->i-1][mj->j]==own||(mj->bd->data[mj->i][mj->j+1]==own)))
+		{
+			total_mark[mj->i][mj->j]+=index_b*20;
+		}
+		if (mj->i-1>=0 && mj->i+1<=12 && mj->j-1>=0 && mj->j+1<=12 &&
+			mj->bd->data[mj->i-1][mj->j-1]==own && mj->bd->data[mj->i-1][mj->j]==run && mj->bd->data[mj->i][mj->j-1]==run &&
+			(mj->bd->data[mj->i][mj->j+1]==own||(mj->bd->data[mj->i+1][mj->j]==own)))
+		{
+			total_mark[mj->i][mj->j]+=index_b*20;
+		}
 
 		Board bdnew(mj->bd);
 		for (int ii=0;ii<numset;++ii)
@@ -218,7 +286,7 @@ class MyWorker:public SWorker
 			bool black_go=1;
 			if (mj->isWh==1)
 			{
-				int cstep=0;
+				int cstep=1;
 				while (white_go || black_go)
 				{
 					Piece rand;
@@ -241,7 +309,7 @@ class MyWorker:public SWorker
 						mj->bd->put(rand);//bai fang xia
 						cstep++;
 						white_go=1;
-						mj->mark[rand.row][rand.col]=cstep;
+						if(mj->mark[rand.row][rand.col]==0) mj->mark[rand.row][rand.col]=cstep;
 					}
 					else
 					{
@@ -255,17 +323,18 @@ class MyWorker:public SWorker
 				{
 					for (int j=0;j<13;++j)
 					{
-						if (mj->mark[i][j]!=0)
+						if (mj->mark[i][j]!=0 && mj->mark[i][j]<=10)
 						{
-							total_mark[i][j]+=(100/mj->mark[i][j])*white_win*index_c;
+							total_mark[i][j]+=(100*amaf[mj->mark[i][j]-1])*white_win*index_c;
 						}
 
 					}
 				}
+				total_mark[mj->i][mj->j]+=(100)*white_win*index_c;
 			}
 			else
 			{
-				int cstep=0;
+				int cstep=1;
 				while (white_go || black_go)
 				{
 					Piece rand;
@@ -288,7 +357,7 @@ class MyWorker:public SWorker
 						mj->bd->put(rand);//bai fang xia
 						cstep++;
 						black_go=1;
-						mj->mark[rand.row][rand.col]=cstep;
+						if(mj->mark[rand.row][rand.col]==0) mj->mark[rand.row][rand.col]=cstep;
 					}
 					else
 					{
@@ -302,13 +371,14 @@ class MyWorker:public SWorker
 				{
 					for (int j=0;j<13;++j)
 					{
-						if (mj->mark[i][j]!=0)
+						if (mj->mark[i][j]!=0 && mj->mark[i][j]<=10)
 						{
-							total_mark[i][j]+=(100/mj->mark[i][j])*black_win*index_c;
+							total_mark[i][j]+=(100*amaf[mj->mark[i][j]-1])*black_win*index_c;
 						}
 
 					}
 				}
+				total_mark[mj->i][mj->j]+=(100)*black_win*index_c;
 			}
 		}
 	}
@@ -318,25 +388,13 @@ class MyWorker:public SWorker
 class MyGame:public GTPAdapter
 {
 	int step;
-	bool can[17][17];
 	void onClear()
 	{
-		memset(can,0,sizeof(bool)*17*17);
 		step=0;
 	}
 	void onBoardSize(int sz)
 	{
 	
-	}
-	void onMoved(int isW,int a,int b)
-	{
-		for (int i=a;i<a+5;++i)
-		{
-			for (int j=b;j<b+5;++j)
-			{
-				can[i][j]=1;
-			}
-		}
 	}
 	void onPlay(int isW,int a,int b)
 	{
@@ -358,7 +416,7 @@ class MyGame:public GTPAdapter
 		{
 			for(int j=0;j<13;j++)
 			{
-				total_mark[i][j]=1000000.0;
+				total_mark[i][j]=0;
 			}
 		}
 		if (step>=1 && step<=4)
@@ -476,7 +534,8 @@ class MyGame:public GTPAdapter
 				{
 					for(int j=0;j<13;j++)
 					{
-						if(!can[i+2][j+2] || bd.checkTrueEye(isW+1,i,j) || bd.data[i][j]!=GO_NULL || bd.checkSuicide(isW+1,i,j) 
+						// !can[i+2][j+2] || 
+						if(bd.checkTrueEye(isW+1,i,j) || bd.data[i][j]!=GO_NULL || bd.checkSuicide(isW+1,i,j) 
 							|| bd.checkCompete(isW+1,i,j))
 							continue;
 						jobs[i][j]=new MyJob(bd);
@@ -486,6 +545,7 @@ class MyGame:public GTPAdapter
 						psch->submit(jobs[i][j],1);
 					}
 				}
+
 			/////run the threads and wait for the work completes
 			psch->go();
 			psch->wait();
@@ -535,6 +595,10 @@ class MyGame:public GTPAdapter
 			}
 			a=tmp_i;
 			b=tmp_j;
+			// use random
+			Piece p = bd.getRandomPiece(isW+1);
+			a = p.row;
+			b = p.col;
 		}
 		if (domove)
 			return true;

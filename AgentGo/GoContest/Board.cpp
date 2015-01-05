@@ -46,7 +46,8 @@ void Board::clear(){
 	for ( i=0; i<BOARD_SIZE*BOARD_SIZE; i++){
 		space_list[i][0]=i-1;
 		space_list[i][1]=i+1;
-		goodplace[i][0] = goodplace[i][1];
+		goodplace[i][0] = goodplace[i][1] = false;
+		distance[i][0] = distance[i][1] = 4;
 		reserve[i] = 0;
 	}
 	space_list[0][0] = 0;
@@ -163,7 +164,10 @@ bool Board::put(int agent,int row,int col){
 	SetNode* snself = getSet(i,j);
 	snself->hp += hp;
 	if( snself->hp == 0 ) killSetNode(snself);
-	else updateGoodPlace(agent,i,j);
+	else{
+		updateGoodPlace(agent,i,j);
+		updateDistance(agent,i,j);
+	}
 
 	#ifdef GO_BOARD_TIME
 		time_put += clock()-cl;
@@ -180,9 +184,15 @@ Piece Board::getPiece(int row,int col){
 		if( row<0 || col<0 || row>BOARD_SIZE-1 || col>BOARD_SIZE-1 ){
 			dprintf("error in get piece in %d %d, the position is illegal\n", row, col);
 			AG_PANIC(0);
-			return Piece(GO_NULL,0,0);
 		}
 	#endif
+	return Piece(data[row][col],row,col);
+}
+
+Piece Board::getPieceS(int row,int col){
+	if( row<0 || col<0 || row>BOARD_SIZE-1 || col>BOARD_SIZE-1 ){
+		return Piece();
+	}
 	return Piece(data[row][col],row,col);
 }
 
@@ -224,6 +234,8 @@ void Board::clone(const Board &board){
 		space_list[i][1] = board.space_list[i][1];
 		goodplace[i][0] = board.goodplace[i][0];
 		goodplace[i][1] = board.goodplace[i][1];
+		distance[i][0] = board.distance[i][0];
+		distance[i][1] = board.distance[i][1];
 		reserve[i] = board.reserve[i];
 	}
 	space_head = board.space_head;
@@ -341,7 +353,9 @@ Piece Board::getRandomPiece(int agent){
 		row = rand() % BOARD_SIZE;
 		col = rand() % BOARD_SIZE;
 		if( data[row][col]!=GO_NULL
-			|| checkTrueEye(agent,row,col)  
+			|| !checkGoodPlace(agent,row,col)
+			|| !checkDistFar(agent,row,col)
+			|| checkTrueEye(agent,row,col) 
 			|| checkSuicide(agent,row,col)
 			|| checkCompete(agent,row,col)
 		)
@@ -543,7 +557,7 @@ void Board::updateGoodPlace(int agent,int row,int col){
 	cand[25] = getIdxS(row,col-2);
 	cand[26] = getIdxS(row+2,col);
 	cand[27] = getIdxS(row,col+2);
-	for (int i=0; i<24; i++) {
+	for (int i=0; i<16; i++) {
 		if( cand[i]>=0 ){
 			goodplace[cand[i]][0] = goodplace[cand[i]][1] = 1;
 		}
@@ -557,4 +571,56 @@ void Board::updateGoodPlace(int agent,int row,int col){
 
 inline bool Board::checkGoodPlace(int agent,int row,int col){
 	return goodplace[row*BOARD_SIZE+col][agent-1];
+}
+
+void Board::updateDistance(int agent,int row,int col){
+	setDistance(agent,row-1,col,1);
+	setDistance(agent,row,col-1,1);
+	setDistance(agent,row+1,col,1);
+	setDistance(agent,row,col+1,1);
+	// jian tiao fei
+	setDistance(agent,row-1,col-1,2);
+	setDistance(agent,row+1,col-1,2);
+	setDistance(agent,row+1,col+1,2);
+	setDistance(agent,row-1,col+1,2);
+	setDistance(agent,row-2,col,2);
+	setDistance(agent,row,col-2,2);
+	setDistance(agent,row+2,col,2);
+	setDistance(agent,row,col+2,2);
+	setDistance(agent,row-2,col-1,2);
+	setDistance(agent,row-1,col-2,2);
+	setDistance(agent,row+1,col-2,2);
+	setDistance(agent,row+2,col-1,2);
+	setDistance(agent,row+2,col+1,2);
+	setDistance(agent,row+1,col+2,2);
+	setDistance(agent,row-1,col+2,2);
+	setDistance(agent,row-2,col+1,2);
+	// xiangya datiao dafei
+	setDistance(agent,row-2,col-2,3);
+	setDistance(agent,row+2,col-2,3);
+	setDistance(agent,row+2,col+2,3);
+	setDistance(agent,row+2,col+2,3);
+	setDistance(agent,row-3,col,3);
+	setDistance(agent,row,col-3,3);
+	setDistance(agent,row+3,col,3);
+	setDistance(agent,row,col+3,3);
+	setDistance(agent,row-3,col-1,3);
+	setDistance(agent,row-1,col-3,3);
+	setDistance(agent,row+1,col-3,3);
+	setDistance(agent,row+3,col-1,3);
+	setDistance(agent,row+3,col+1,3);
+	setDistance(agent,row+1,col+3,3);
+	setDistance(agent,row-1,col+3,3);
+	setDistance(agent,row-3,col+1,3);
+}
+
+void Board::setDistance(int agent,int row,int col,int dist){
+	if( row<0 || col<0 || row>=BOARD_SIZE || col>=BOARD_SIZE ) return;
+	if( distance[row*BOARD_SIZE+col][agent-1]>dist ) distance[row*BOARD_SIZE+col][agent-1] = dist;
+}
+
+inline bool Board::checkDistFar(int agent,int row,int col){
+	int enemy = 3 - agent;
+	int threshold = -1;
+	return ( distance[row*BOARD_SIZE+col][agent-1]-distance[row*BOARD_SIZE+col][enemy-1] >= threshold );
 }
