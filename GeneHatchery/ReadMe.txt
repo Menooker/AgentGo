@@ -40,8 +40,8 @@ usage for ghp2txt or txt2ghp
 	GeneHatchery txt2ghp {src txt file} {dest ghp file}
 
 Examples :
-GeneHatchery
-GeneHatchery master "AgentGo_AI.exe" "C:\Users\Menooker\Desktop\Go\gnugo-3.8\gnugo.exe --mode gtp --level 1"  -d3 1000 1 1 -s 2 -c 6 -r 10 -f progress.ghp
+GeneHatchery -f progress.ghp
+GeneHatchery master "AgentGo_AI.exe" "C:\Users\Menooker\Desktop\Go\gnugo-3.8\gnugo.exe --mode gtp --level 1"  -d3 1000 1 1 -s 2 -c 6 -r 10 
 GeneHatchery slave "AgentGo_AI.exe" "C:\Users\Menooker\Desktop\Go\gnugo-3.8\gnugo.exe --mode gtp --level 1" 12.34.5.6 3000
 GeneHatchery ghp2txt c:\2.ghp out.txt
 GeneHatchery txt2ghp hehe.txt out.ghp
