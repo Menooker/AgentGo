@@ -17,6 +17,7 @@ public:
 	bool use_dyn;
 	
 	Piece pieces_stat[SET_STATIC_SIZE]; // do not use this one publically; 
+	Piece pieces_stat2[BOARD_SIZE*BOARD_SIZE];
 	Piece* pieces;		// initally pointo to pieces_stat[], but if use dynamic, new Piece[169]
 
 	SetNode(void);

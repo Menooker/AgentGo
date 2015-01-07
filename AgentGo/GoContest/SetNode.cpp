@@ -57,7 +57,7 @@ void SetNode::clear(){
 	memset(pieces_stat, 0, SET_STATIC_SIZE*sizeof(Piece) );
 	if( use_dyn && pieces!=pieces_stat ){
 		//delete []pieces;
-		PiecePool.free((PieceArray*)pieces);
+		//PiecePool.free((PieceArray*)pieces);
 		pieces = pieces_stat;
 	}
 	use_dyn = false;
@@ -70,7 +70,7 @@ void SetNode::drop(){
 	memset(pieces_stat, 0, SET_STATIC_SIZE*sizeof(Piece) );
 	if( use_dyn && pieces!=pieces_stat){
 		//delete []pieces;
-		PiecePool.free((PieceArray*)pieces);
+		//PiecePool.free((PieceArray*)pieces);
 		pieces = pieces_stat;
 	}
 	use_dyn = false;
@@ -91,7 +91,7 @@ void SetNode::merge_pieces(const SetNode &sn){
 
 void SetNode::initDyn(){
 	use_dyn = true;
-	pieces = (Piece*)PiecePool.alloc();//new Piece[BOARD_SIZE*BOARD_SIZE];
+	pieces = pieces_stat2;//(Piece*)PiecePool.alloc();//new Piece[BOARD_SIZE*BOARD_SIZE];
 	memcpy(pieces, pieces_stat, SET_STATIC_SIZE*sizeof(Piece) );
 	// it doesn't clear the pieces_stat[]
 }
