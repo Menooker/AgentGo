@@ -1,6 +1,12 @@
 
 #include "SetNode.h"
+#include "../TinyOP.h"
 
+struct PieceArray
+{
+	Piece ar[BOARD_SIZE*BOARD_SIZE];
+};
+TinyOP<PieceArray> PiecePool(20000);
 
 SetNode::SetNode(void):pnode(UNKNOWN_IDX),hp(0),deepth(0),size(0),use_dyn(false),pieces(pieces_stat)
 {
@@ -50,7 +56,8 @@ void SetNode::clear(){
 	size = 0;
 	memset(pieces_stat, 0, SET_STATIC_SIZE*sizeof(Piece) );
 	if( use_dyn && pieces!=pieces_stat ){
-		delete []pieces;
+		//delete []pieces;
+		PiecePool.free((PieceArray*)pieces);
 		pieces = pieces_stat;
 	}
 	use_dyn = false;
@@ -62,7 +69,8 @@ void SetNode::drop(){
 	size = 0;
 	memset(pieces_stat, 0, SET_STATIC_SIZE*sizeof(Piece) );
 	if( use_dyn && pieces!=pieces_stat){
-		delete []pieces;
+		//delete []pieces;
+		PiecePool.free((PieceArray*)pieces);
 		pieces = pieces_stat;
 	}
 	use_dyn = false;
@@ -83,7 +91,7 @@ void SetNode::merge_pieces(const SetNode &sn){
 
 void SetNode::initDyn(){
 	use_dyn = true;
-	pieces = new Piece[BOARD_SIZE*BOARD_SIZE];
+	pieces = (Piece*)PiecePool.alloc();//new Piece[BOARD_SIZE*BOARD_SIZE];
 	memcpy(pieces, pieces_stat, SET_STATIC_SIZE*sizeof(Piece) );
 	// it doesn't clear the pieces_stat[]
 }
