@@ -65,7 +65,7 @@ class MyWorker:public SWorker
 		int num_b_2=mj->bd->num_black;
 		int num_w_2=mj->bd->num_white;
 		int run=2-mj->isWh;
-		int numset=150;
+		int numset=600;
 					//¼´Ê±ÀûÒæ
 			if (mj->isWh==1)
 			{
