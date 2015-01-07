@@ -4,7 +4,7 @@
 #include <memory.h>
 
 #define UNKNOWN_IDX  999
-#define SET_STATIC_SIZE 25		// enlarging this number will improve efficiency but requires much more space
+#define SET_STATIC_SIZE (BOARD_SIZE*BOARD_SIZE)		// enlarging this number will improve efficiency but requires much more space
 
 
 struct SetNode
@@ -15,7 +15,7 @@ public:
 	int deepth;
 	int size;
 	
-	Piece pieces[BOARD_SIZE*BOARD_SIZE]; // do not use this one publically; 
+	Piece pieces[SET_STATIC_SIZE]; // do not use this one publically; 
 		// initally pointo to pieces_stat[], but if use dynamic, new Piece[169]
 
 	SetNode(void);
@@ -26,6 +26,5 @@ public:
 	void drop();	// a setnode is dropped when it is unioned to another
 	void push_back(Piece piece);
 	void merge_pieces(const SetNode &sn);
-	inline void initDyn();	
 };
 

@@ -1,12 +1,6 @@
 
 #include "SetNode.h"
-#include "../TinyOP.h"
 
-struct PieceArray
-{
-	Piece ar[BOARD_SIZE*BOARD_SIZE];
-};
-//TinyOP<PieceArray> PiecePool(20000);
 
 SetNode::SetNode(void):pnode(UNKNOWN_IDX),hp(0),deepth(0),size(0)
 {
@@ -57,7 +51,6 @@ void SetNode::drop(){
 }
 
 void SetNode::push_back(Piece piece){
-	if( size==SET_STATIC_SIZE )	initDyn();
 	pieces[size] = piece;
 	size++;
 	return;
@@ -69,8 +62,3 @@ void SetNode::merge_pieces(const SetNode &sn){
 	size += sn.size;
 }
 
-void SetNode::initDyn(){
-
-
-	// it doesn't clear the pieces_stat[]
-}
