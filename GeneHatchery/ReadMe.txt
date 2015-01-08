@@ -3,7 +3,9 @@ Run "GeneHatchery" with no parameters to show help
 
 Network Mode Limits: 50 genes with 10 DNA positions
 Gene positions should be even!
-MUTATION_RATE should be int,MUTATION_PERCENTAGE be double!!
+MUTATION_RATE should be int from [0,100] ,MUTATION_PERCENTAGE be double where 1 is for 100% !!
+MUTATION_RATE is the chance that a gene mutates. 
+MUTATION_PERCENTAGE is the variation of the gene value.
 
 --------------------
 ghp2txt
