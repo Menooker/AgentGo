@@ -349,13 +349,45 @@ class MyWorker:public SWorker
 class MyGame:public GTPAdapter
 {
 	int step;
+	bool can[17][17];
+	void boundedWaiting(Scheduler<MyWorker>* psch)
+	{
+			if(!psch->wait(5000))
+			{
+				dprintf("Wait time expired\n");
+				psch->abort();
+				if(!psch->wait(1000))
+				{
+					psch->end();
+					dprintf("Abort time expired\n");
+					for(int cc=0;cc<10;cc++)
+					{
+						if(!psch->all_threads_dead())
+							Sleep(70);
+						else
+							break;
+					}
+				}
+			}
+	}
 	void onClear()
 	{
+		step=0;
 		step=0;
 	}
 	void onBoardSize(int sz)
 	{
 	
+	}
+	void onMoved(int isW,int a,int b)
+	{
+		for (int i=a;i<a+5;++i)
+		{
+			for (int j=b;j<b+5;++j)
+			{
+				can[i][j]=1;
+			}
+		}
 	}
 	void onPlay(int isW,int a,int b)
 	{
@@ -557,7 +589,6 @@ class MyGame:public GTPAdapter
 						psch->submit(jobs[i][j],1);
 					}
 				}
-
 			/////run the threads and wait for the work completes
 			psch->go();
 			psch->wait();
@@ -576,6 +607,23 @@ class MyGame:public GTPAdapter
 				for (int j=0;j<13;++j)
 				{
 						if (!bd.checkTrueEye(isW+1,i,j) && bd.data[i][j]==GO_NULL && !bd.checkSuicide(isW+1,i,j) && !bd.checkCompete(isW+1,i,j))
+						{
+							tmp=total_mark[i][j];
+							tmp_i=i;
+							tmp_j=j;
+							domove=1;
+							break;
+						}
+				}
+				if (domove)
+				{
+					break;
+				}
+			}
+
+			for (int i=0;i<13;++i)
+			{
+				for (int j=0;j<13;++j)
 						{
 							avrg_scale_mc += abs(mc[i][j]/169);
 							avrg_scale_amaf1 += abs(amaf1[i][j]/169);

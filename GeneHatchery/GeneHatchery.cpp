@@ -13,14 +13,21 @@
 /*
 Network Mode Limits:
 50 genes with 10 DNA positions
+//gene positions should be even!
+//MUTATION_RATE should be int,MUTATION_PERCENTAGE be double!!
 
-//master "AgentGo_AI.exe" "C:\Users\Menooker\Desktop\Go\gnugo-3.8\gnugo.exe --mode gtp --level 1"  -d3 1000 1 1 -s 2 -c 6 -r 10 -f progress.ghp
+
+//ghp2txt c:\2.ghp out.txt
+//txt2ghp hehe.txt out.ghp
+//master "AgentGo_AI.exe" "C:\Users\Menooker\Desktop\Go\gnugo-3.8\gnugo.exe --mode gtp --level 1"  -d3 1000 1 1 -s 1 -c 6 -r 10
+//master "AgentGo_AI.exe" "C:\Users\Menooker\Desktop\Go\gnugo-3.8\gnugo.exe --mode gtp --level 1"  -s 2 -f progress.ghp
 //slave "AgentGo_AI.exe" "C:\Users\Menooker\Desktop\Go\gnugo-3.8\gnugo.exe --mode gtp --level 1" 12.34.5.6 3000
+
 */
 
 
-#define MUTATION_RATE 2
-#define MUTATION_PERCENTAGE 0.3
+int MUTATION_RATE=2;
+double MUTATION_PERCENTAGE= 0.3;
 
 #define GaIntToChar(i)  ((char)((i<='H'-'A')?i+'A':i+'A'+1))
 #define GaCharToInt(i)  ((int)((i<='h')?i-'a':i-'a'-1))
@@ -41,7 +48,9 @@ HANDLE  hStdOutWrite[2];    ///子进程用的stdout的写入端
 //定义句柄: 构成stderr管道的句柄，由于stderr一般等于stdout,我们没有定义hStdErrRead，直接用hStdOutRead即可  
 HANDLE  hStdErrWrite[2];       ///子进程用的stderr的写入端  
 
-
+void validate_gene(double* d,int cnt)
+{
+}
 
 struct ServerParam
 {
@@ -406,7 +415,7 @@ int SimulateOneGame(double dna[],int ndna,int index[])
 	WCHAR fstr[20];
 	for(int i=0;i<ndna;i++)
 	{
-		swprintf(fstr,L" %f",dna[i]);
+		swprintf(fstr,L" %lf",dna[i]);
 		wcscat_s(path,MAX_PATH,fstr);
 	}
 	HANDLE hDebugee=CreateRedirectedProcess(path,0);
@@ -533,7 +542,7 @@ void print_gene(double g[],int c)
 	printf("<");
 	for(int i=0;i<c;i++)
 	{
-		printf("%f,",g[i]);
+		printf("%lf,",g[i]);
 	}
 	printf(">\n");
 }
@@ -671,10 +680,11 @@ void mate(double f[],double m[],double s[],int DNAs)
 void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* olddata,ServerParam* parm)
 {
 	printf("Slaves: %d, DNAs: %d\n",slaves,DNAs);
+	printf("Mutation rates: %d, percentage: %lf\n",MUTATION_RATE,MUTATION_PERCENTAGE);
 	if(olddata)
 		printf("Continue Execution....\n");
 	else
-		printf("%f %f %f\n",initDNA[0],initDNA[1],initDNA[2]);
+		printf("%lf %lf %lf\n",initDNA[0],initDNA[1],initDNA[2]);
 
 	double* data;
 	if(olddata)
@@ -718,6 +728,8 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 	for(int rnd=0;rnd<rounds;rnd++)
 	{
 		FILE* fp=fopen("progress.ghp","wb");
+		fwrite(&MUTATION_RATE,sizeof(MUTATION_RATE),1,fp);
+		fwrite(&MUTATION_PERCENTAGE,sizeof(MUTATION_PERCENTAGE),1,fp);
 		fwrite(&slaves,sizeof(slaves),1,fp);
 		fwrite(&DNAs,sizeof(DNAs),1,fp);
 		fwrite(&cnt,sizeof(cnt),1,fp);
@@ -769,14 +781,15 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 		fprintf(outfile,"%d",rnd);
 		for(int i=0;i<DNAs;i++)
 		{
-			fprintf(outfile,",%f",hatchery[sort_index[0]][i]);
+			fprintf(outfile,",%lf",hatchery[sort_index[0]][i]);
 		}
 		fprintf(outfile,",%d\n",scores[sort_index[0]]);
 
 		for(int i=cnt/2;i<cnt;i++)
 		{
 			j=i-cnt/2;
-			mate(hatchery[sort_index[j]],hatchery[sort_index[j+1]],hatchery[sort_index[i]],DNAs);	
+			mate(hatchery[sort_index[j]],hatchery[sort_index[j+1]],hatchery[sort_index[i]],DNAs);
+			validate_gene(hatchery[sort_index[i]],DNAs);
 		}
 
 	}
@@ -798,11 +811,109 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 
 void param_abort()
 {
-	printf("Bad parameters!\nusage for master mode:\nGeneHatchery master [-f {path to saved records}] [-s {slaves}] [-r {generations}] [-c {competitors}] [-d {DNAs dna0 dna1 dna2...}]\n");
-	printf("usage for slave mode:\nGeneHatchery slave {master ip} {port}");
+	printf("Bad parameters!\nusage for master mode:\nGeneHatchery master {debugee} {reference} [-mp {mutation percentage(double)}] [-mr {mutation rates(int)}] [-f {path to saved records}] [-s {slaves}] [-r {generations}] [-c {competitors}] [-d {DNAs dna0 dna1 dna2...}]\n");
+	printf("usage for slave mode:\nGeneHatchery slave {debugee} {reference} {master ip} {port}\n");
+	printf("usage for ghp2txt or txt2ghp\nGeneHatchery ghp2txt {src ghp file} {dest txt file}\nGeneHatchery txt2ghp {src txt file} {dest ghp file}\n");
+	system("pause");
 	exit(-1);
 }
 //-f progress.ghp
+void mypanic(char* c)
+{
+	printf(c);
+	system("pause");
+	exit(-1);
+}
+
+void ghp2txt(WCHAR* src,WCHAR* dst)
+{
+	FILE* fpr=_wfopen(src,L"r");
+	FILE* fpw=_wfopen(dst,L"w");
+	int mslaves,mDNAs,mcnt;
+	double data;
+	fread(&MUTATION_RATE,sizeof(MUTATION_RATE),1,fpr);
+	fread(&MUTATION_PERCENTAGE,sizeof(MUTATION_PERCENTAGE),1,fpr);
+	fread(&mslaves,sizeof(mslaves),1,fpr);
+	fread(&mDNAs,sizeof(mDNAs),1,fpr);
+	fread(&mcnt,sizeof(mcnt),1,fpr);
+
+	fprintf(fpw,"%d,%lf,%d,%d,%d\n",MUTATION_RATE,MUTATION_PERCENTAGE,mslaves,mDNAs,mcnt);
+	for(int i=0;i<mcnt;i++)
+	{
+		for(int j=0;j<mDNAs-1;j++)
+		{
+			fread(&data,sizeof(data),1,fpr);
+			fprintf(fpw,"%lf,",data);
+		}
+		fread(&data,sizeof(data),1,fpr);
+		fprintf(fpw,"%lf\n",data);
+	}
+	fclose(fpw);
+	fclose(fpr);
+}
+
+void txt2ghp(WCHAR* src,WCHAR* dst)
+{//txt2ghp d:\pro.txt d:\pro.ghp 
+	FILE* fpr=_wfopen(src,L"r");
+	FILE* fpw=_wfopen(dst,L"wb");
+
+	char buf[2000]={0};
+	fgets(buf,2000,fpr);
+	int mslaves,mDNAs,mcnt;
+	if(sscanf(buf,"%d,%lf,%d,%d,%d",&MUTATION_RATE,&MUTATION_PERCENTAGE,&mslaves,&mDNAs,&mcnt)==5)
+	{
+		if(mcnt%2)
+		{
+			mypanic("Competors must be even!\n");
+		}
+		fwrite(&MUTATION_RATE,sizeof(MUTATION_RATE),1,fpw);
+		fwrite(&MUTATION_PERCENTAGE,sizeof(MUTATION_PERCENTAGE),1,fpw);
+		fwrite(&mslaves,sizeof(mslaves),1,fpw);
+		fwrite(&mDNAs,sizeof(mDNAs),1,fpw);
+		fwrite(&mcnt,sizeof(mcnt),1,fpw);
+
+		for(int i=0;i<mcnt;i++)
+		{
+			memset(buf,0,2000);
+			if(!fgets(buf,2000,fpr))
+				mypanic("Wrong format: end of line!\n");
+			char* last;
+			char* cur=buf;
+			for(int j=0;j<mDNAs;j++)
+			{
+				last=cur;
+				for(;;) //fild next ","
+				{
+					if(*cur==0)
+					{
+						if(j!=mDNAs-1)
+							mypanic("Wrong format: wrong number of dna positions!\n");
+						break;
+					}
+					if(*cur==',')
+					{
+						*cur=0;
+						cur++;
+						break;
+					}
+					cur++;
+				}
+				double data=atof(last);
+				fwrite(&data,sizeof(data),1,fpw);
+				printf("%lf,",data);
+			}
+			printf("\n");
+		}
+
+	}
+	else
+	{
+		mypanic("Wrong format: bad file head!\n");
+	}
+	fclose(fpw);
+	fclose(fpr);
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
     WORD sockVersion = MAKEWORD(2,2);
@@ -824,6 +935,16 @@ int _tmain(int argc, _TCHAR* argv[])
 			printf("Connecting %s:%d",ip,port);
 			slave(ip,port);
 		}
+		else if (!wcscmp(argv[1],L"txt2ghp") && argc==4)
+		{
+			txt2ghp(argv[2],argv[3]);
+			printf("success!\n");
+		}
+		else if (!wcscmp(argv[1],L"ghp2txt") && argc==4)
+		{
+			ghp2txt(argv[2],argv[3]);
+			printf("success!\n");
+		}
 		else if (!wcscmp(argv[1],L"master"))
 		{
 			if(argc>2)
@@ -843,15 +964,32 @@ int _tmain(int argc, _TCHAR* argv[])
 						if(!olddata)  slaves=_wtoi(argv[i+1]);
 						i++;
 					}
+					else if(!wcscmp(argv[i],L"-mr") && i<argc-1)
+					{
+						if(!olddata)  MUTATION_RATE=_wtoi(argv[i+1]);
+						i++;
+					}
+					else if(!wcscmp(argv[i],L"-mp") && i<argc-1)
+					{
+						if(!olddata)  MUTATION_PERCENTAGE=_wtof(argv[i+1]);
+						i++;
+					}
 					else if(!wcscmp(argv[i],L"-f") && i<argc-1)
 					{
 						FILE* fp=_wfopen(argv[i+1],L"r");
+						fread(&MUTATION_RATE,sizeof(MUTATION_RATE),1,fp);
+						fread(&MUTATION_PERCENTAGE,sizeof(MUTATION_PERCENTAGE),1,fp);
 						fread(&slaves,sizeof(slaves),1,fp);
 						fread(&DNAs,sizeof(DNAs),1,fp);
 						fread(&cnt,sizeof(cnt),1,fp);
 						olddata=(double*)malloc(sizeof(double)*cnt*DNAs);
 						fread(olddata,sizeof(double)*cnt*DNAs,1,fp);
 						fclose(fp);
+						if(cnt%2)
+						{
+							printf("sample count must be even!\n");
+							system("pause");exit(-1);
+						}
 						i++;
 					}
 					else if(!wcscmp(argv[i],L"-r") && i<argc-1)
@@ -865,7 +1003,7 @@ int _tmain(int argc, _TCHAR* argv[])
 						if(cnt%2)
 						{
 							printf("sample count must be even!\n");
-							exit(-1);
+							system("pause");exit(-1);
 						}
 						i++;
 					}

@@ -49,7 +49,7 @@ void SetNode::clear(){
 	deepth = 0;
 	size = 0;
 	memset(pieces_stat, 0, SET_STATIC_SIZE*sizeof(Piece) );
-	if( use_dyn ){
+	if( use_dyn && pieces!=pieces_stat ){
 		delete []pieces;
 		pieces = pieces_stat;
 	}
@@ -61,7 +61,7 @@ void SetNode::drop(){
 	deepth = 0;
 	size = 0;
 	memset(pieces_stat, 0, SET_STATIC_SIZE*sizeof(Piece) );
-	if( use_dyn ){
+	if( use_dyn && pieces!=pieces_stat){
 		delete []pieces;
 		pieces = pieces_stat;
 	}
