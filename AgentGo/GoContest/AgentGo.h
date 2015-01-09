@@ -13,3 +13,4 @@
 #define GO_WHITE     2
 #define GO_BOTH      3
 #define BOARD_SIZE	 13
+#define AMAF_RANGE   40
