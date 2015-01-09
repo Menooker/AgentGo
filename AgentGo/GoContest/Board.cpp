@@ -46,7 +46,6 @@ void Board::clear(){
 	for ( i=0; i<BOARD_SIZE*BOARD_SIZE; i++){
 		space_list[i][0]=i-1;
 		space_list[i][1]=i+1;
-		goodplace[i][0] = goodplace[i][1] = false;
 		distance[i][0] = distance[i][1] = 4;
 		reserve[i] = 0;
 	}
@@ -62,6 +61,8 @@ void Board::clear(){
 	#ifdef GO_BOARD_TIME
 		time_put = time_kill = time_random1 = time_random2 = time_getset = 0;
 	#endif
+	last_move[0].clear();
+	last_move[1].clear();
 }
 
 bool Board::put(int agent,int row,int col){
@@ -165,9 +166,9 @@ bool Board::put(int agent,int row,int col){
 	snself->hp += hp;
 	if( snself->hp == 0 ) killSetNode(snself);
 	else{
-		updateGoodPlace(agent,i,j);
-		updateDistance(agent,i,j);
+		//updateDistance(agent,i,j);
 	}
+	last_move[agent-1] = Piece(agent,row,col);
 
 	#ifdef GO_BOARD_TIME
 		time_put += clock()-cl;
@@ -179,7 +180,7 @@ bool Board::put(const Piece &piece){
 	return put(piece.agent, piece.row, piece.col);
 }
 
-Piece Board::getPiece(int row,int col){
+inline Piece Board::getPiece(int row,int col){
 	#ifdef GO_DEBUG
 		if( row<0 || col<0 || row>BOARD_SIZE-1 || col>BOARD_SIZE-1 ){
 			dprintf("error in get piece in %d %d, the position is illegal\n", row, col);
@@ -189,26 +190,27 @@ Piece Board::getPiece(int row,int col){
 	return Piece(data[row][col],row,col);
 }
 
-Piece Board::getPieceS(int row,int col){
+inline bool Board::checkPiece(int agent, int row, int col){
 	if( row<0 || col<0 || row>BOARD_SIZE-1 || col>BOARD_SIZE-1 ){
-		return Piece();
+		return false;
 	}
-	return Piece(data[row][col],row,col);
+	return ( data[row][col] == agent );
 }
 
 void Board::pass(int agent){
 	exist_compete = false;
+	last_move[agent-1].clear();
 }
 
 void Board::print(){
 	int i,j;
 	for( i=0; i<BOARD_SIZE; i++){
 		for( j=0; j<BOARD_SIZE; j++){
-			printf("%d ",data[i][j]);
+			dprintf("%d ",data[i][j]);
 		}
-		printf("\n");
+		dprintf("\n");
 	}
-	printf("\n");
+	dprintf("\n");
 }
 
 void Board::clone(const Board &board){
@@ -232,8 +234,6 @@ void Board::clone(const Board &board){
 	for ( i=0; i<BOARD_SIZE*BOARD_SIZE; i++){
 		space_list[i][0] = board.space_list[i][0];
 		space_list[i][1] = board.space_list[i][1];
-		goodplace[i][0] = board.goodplace[i][0];
-		goodplace[i][1] = board.goodplace[i][1];
 		distance[i][0] = board.distance[i][0];
 		distance[i][1] = board.distance[i][1];
 		reserve[i] = board.reserve[i];
@@ -249,6 +249,8 @@ void Board::clone(const Board &board){
 	compete[1] = board.compete[1];
 	compete[2] = board.compete[2];
 	game_ending = board.game_ending;
+	last_move[0] = board.last_move[0];
+	last_move[1] = board.last_move[1];
 }
 
 void Board::release(){
@@ -341,11 +343,42 @@ Piece Board::getRandomPiece(int agent){
 		clock_t cl=clock();
 	#endif
 	int row, col;
-	if( game_ending ){
-		//return Piece();
-		return getRandomPieceComplex(agent);
-	}
 	bool flag = true;
+
+	if( game_ending ){
+		if( num_black+num_white<=120) game_ending = false;
+		else return getRandomPieceComplex(agent);
+	}
+
+	//check the place around the last move with some probability
+	int enemy = 3 - agent;
+	int enmrow = last_move[enemy-1].row, enmcol = last_move[enemy-1].col;
+	if( !last_move[enemy-1].isEmpty() && data[enmrow][enmcol]==enemy ){
+		int range = 1;
+		// the probability of a sorrounding place to be check: 1-(1-1/(2*range+1)^2)^k
+		for( int k=0; k<9; k++){
+			int i = enmrow - range + ( rand() % (2*range+1));
+			int j = enmcol - range + ( rand() % (2*range+1));
+			if( (i>=0 && i<BOARD_SIZE && j>=0 && j<BOARD_SIZE)
+				&& data[i][j] == GO_NULL
+				&& ( false
+				  || checkKill(agent,i,j)
+				  || k<6 && checkSurvive(agent,i,j)
+				  || k<4 && checkChase(agent,i,j)
+				)
+				&& !checkDying(agent,i,j)
+				&& !checkTrueEye(agent,i,j) 
+				&& !checkSuicide(agent,i,j)
+				&& !checkCompete(agent,i,j)
+			){
+				row = i;
+				col = j;
+				flag = false;
+				break;
+			}
+		}
+	}
+
 	int count = 0;
 	while(flag){
 		flag = false;
@@ -353,8 +386,12 @@ Piece Board::getRandomPiece(int agent){
 		row = rand() % BOARD_SIZE;
 		col = rand() % BOARD_SIZE;
 		if( data[row][col]!=GO_NULL
-			|| !checkGoodPlace(agent,row,col)
-			|| !checkDistFar(agent,row,col)
+			//|| count<20 && !checkKeyPlace(agent,row,col)
+			//|| count<20 && !checkGoodPlace(agent,row,col)
+			//|| !checkNeighbour(agent,row,col)
+			//|| !checkDistFar(agent,row,col)
+			//|| checkNoSense(agent,row,col)
+			|| checkDying(agent,row,col)
 			|| checkTrueEye(agent,row,col) 
 			|| checkSuicide(agent,row,col)
 			|| checkCompete(agent,row,col)
@@ -433,7 +470,6 @@ Piece Board::getRandomPieceComplex(int agent)
 		idx = space_list[idx][1];
 		rnd--;
 	}
-
 	resetReserve();
 	#ifdef GO_BOARD_TIME
 		time_random2 += clock()-cl;
@@ -487,21 +523,230 @@ bool Board::checkSuicide(int agent, int row, int col){
 	return true;
 }
 
+bool Board::checkKill(int agent, int row, int col){
+	int i = row, j = col;
+	bool enemy[4] = {0,0,0,0};
+	int minus_hp[4] = {1,1,1,1};
+	SetNode* s[4] = {0,0,0,0};
+	if(i-1>=0 && data[i-1][j]!=GO_NULL ){
+		if( data[i-1][j]!=agent ) enemy[0] = true;
+		s[0] = getSet(i-1,j);
+	}
+	if(j-1>=0 && data[i][j-1]!=GO_NULL ){
+		if( data[i][j-1]!=agent ) enemy[1] = true;
+		s[1] = getSet(i,j-1);
+	}
+	if(i+1<BOARD_SIZE && data[i+1][j]!=GO_NULL ){
+		if( data[i+1][j]!=agent ) enemy[2] = true;
+		s[2] = getSet(i+1,j);
+	}
+	if(j+1<BOARD_SIZE && data[i][j+1]!=GO_NULL ){
+		if( data[i][j+1]!=agent ) enemy[3] = true;
+		s[3] = getSet(i,j+1);
+	}
+
+	// remove repeated setnodes;
+	for( int m=0; m<3; m++){
+		if( s[m] == NULL ) continue;
+		for( int n=m+1; n<4; n++){
+			if( s[m] == s[n] ){
+				s[n] = NULL;
+				minus_hp[m] += minus_hp[n];
+			}
+		}
+	}
+	// if any adjacent enemy node could be killed return true
+	for( int m=0; m<4; m++){
+		if( s[m]!=NULL && ( enemy[m]==true && (s[m]->hp)-minus_hp[m]==0 ) ) return true;
+	}
+	return false;
+}
+
+bool Board::checkSurvive(int agent, int row, int col){
+	int rival = 3 - agent;
+	
+	// Survive is a place where the enemy could kill you but you can save yourself by putting here.
+	if( !checkKill(rival,row,col) ) return false;
+	int i = row, j = col;
+	int hp_new = 0;
+	bool enemy[4] = {0,0,0,0};
+	int minus_hp[4] = {1,1,1,1};
+	SetNode* s[4] = {0,0,0,0};
+	if(i-1>=0){
+		if( data[i-1][j]==GO_NULL )	hp_new++;
+		else{
+			if( data[i-1][j]!=agent ) enemy[0] = true;
+			s[0] = getSet(i-1,j);
+		}
+	}
+	if(j-1>=0){
+		if( data[i][j-1]==GO_NULL )	hp_new++;
+		else{
+			if( data[i][j-1]!=agent ) enemy[1] = true;
+			s[1] = getSet(i,j-1);
+		}
+	}
+	if(i+1<BOARD_SIZE){
+		if( data[i+1][j]==GO_NULL )	hp_new++;
+		else{
+			if( data[i+1][j]!=agent ) enemy[2] = true;
+			s[2] = getSet(i+1,j);
+		}
+	}
+	if(j+1<BOARD_SIZE){
+		if( data[i][j+1]==GO_NULL )	hp_new++;
+		else{
+			if( data[i][j+1]!=agent ) enemy[3] = true;
+			s[3] = getSet(i,j+1);
+		}
+	}
+
+	// remove repeated setnodes;
+	for( int m=0; m<3; m++){
+		if( s[m] == NULL ) continue;
+		for( int n=m+1; n<4; n++){
+			if( s[m] == s[n] ){
+				s[n] = NULL;
+				minus_hp[m] += minus_hp[n];
+			}
+		}
+	}
+	int hp_min = 9999;
+	// if the place will enlarge the total hp return true, if any enemy could be killed return true
+	for( int m=0; m<4; m++){
+		if( s[m]!=NULL && ( enemy[m]==true && (s[m]->hp)-minus_hp[m]==0 ) ) return true;
+		if( s[m]!=NULL && enemy[m]==false ){
+			hp_new += s[m]->hp - minus_hp[m];
+			if( s[m]->hp < hp_min ){
+				hp_min = s[m]->hp;
+			}
+		}
+	}
+	return (hp_new>hp_min);
+}
+
+bool Board::checkDying(int agent, int row, int col){
+	int i = row, j = col;
+	int hp_new = 0;
+	bool enemy[4] = {0,0,0,0};
+	int minus_hp[4] = {1,1,1,1};
+	SetNode* s[4] = {0,0,0,0};
+	if(i-1>=0){
+		if( data[i-1][j]==GO_NULL )	hp_new++;
+		else{
+			if( data[i-1][j]!=agent ) enemy[0] = true;
+			s[0] = getSet(i-1,j);
+		}
+	}
+	if(j-1>=0){
+		if( data[i][j-1]==GO_NULL )	hp_new++;
+		else{
+			if( data[i][j-1]!=agent ) enemy[1] = true;
+			s[1] = getSet(i,j-1);
+		}
+	}
+	if(i+1<BOARD_SIZE){
+		if( data[i+1][j]==GO_NULL )	hp_new++;
+		else{
+			if( data[i+1][j]!=agent ) enemy[2] = true;
+			s[2] = getSet(i+1,j);
+		}
+	}
+	if(j+1<BOARD_SIZE){
+		if( data[i][j+1]==GO_NULL )	hp_new++;
+		else{
+			if( data[i][j+1]!=agent ) enemy[3] = true;
+			s[3] = getSet(i,j+1);
+		}
+	}
+
+	// remove repeated setnodes;
+	for( int m=0; m<3; m++){
+		if( s[m] == NULL ) continue;
+		for( int n=m+1; n<4; n++){
+			if( s[m] == s[n] ){
+				s[n] = NULL;
+				minus_hp[m] += minus_hp[n];
+			}
+		}
+	}
+	// if any enemy could be killed return false
+	for( int m=0; m<4; m++){
+		if( s[m]!=NULL && ( enemy[m]==true && (s[m]->hp)-minus_hp[m]==0 ) ) return false;
+		if( s[m]!=NULL && enemy[m]==false ) hp_new += s[m]->hp - minus_hp[m];
+	}
+	return ( hp_new == 1 );
+}
+
+inline bool Board::checkChase(int agent,int row,int col){
+	int i = row, j = col;
+	int hp_new = 0;
+	bool enemy[4] = {0,0,0,0};
+	int minus_hp[4] = {1,1,1,1};
+	SetNode* s[4] = {0,0,0,0};
+	if(i-1>=0){
+		if( data[i-1][j]==GO_NULL )	hp_new++;
+		else{
+			if( data[i-1][j]!=agent ) enemy[0] = true;
+			s[0] = getSet(i-1,j);
+		}
+	}
+	if(j-1>=0){
+		if( data[i][j-1]==GO_NULL )	hp_new++;
+		else{
+			if( data[i][j-1]!=agent ) enemy[1] = true;
+			s[1] = getSet(i,j-1);
+		}
+	}
+	if(i+1<BOARD_SIZE){
+		if( data[i+1][j]==GO_NULL )	hp_new++;
+		else{
+			if( data[i+1][j]!=agent ) enemy[2] = true;
+			s[2] = getSet(i+1,j);
+		}
+	}
+	if(j+1<BOARD_SIZE){
+		if( data[i][j+1]==GO_NULL )	hp_new++;
+		else{
+			if( data[i][j+1]!=agent ) enemy[3] = true;
+			s[3] = getSet(i,j+1);
+		}
+	}
+
+	// remove repeated setnodes;
+	for( int m=0; m<3; m++){
+		if( s[m] == NULL ) continue;
+		for( int n=m+1; n<4; n++){
+			if( s[m] == s[n] ){
+				s[n] = NULL;
+				minus_hp[m] += minus_hp[n];
+			}
+		}
+	}
+	// if any enemy could be killed return true but make sure itself's safety
+	bool chase = false;
+	for( int m=0; m<4; m++){
+		if( s[m]!=NULL && ( enemy[m]==true && (s[m]->hp)-minus_hp[m]==1 ) ) chase = true;
+		if( s[m]!=NULL && enemy[m]==false ) hp_new += s[m]->hp - minus_hp[m];
+	}
+	return ( chase && hp_new>1 );
+}
+
 bool Board::checkTrueEye(int agent, int row, int col){
 	int i = row, j = col;
 	if( i-1>=0 && data[i-1][j]!=agent )	return false;
 	if( j-1>=0 && data[i][j-1]!=agent )	return false;
 	if( i+1<BOARD_SIZE && data[i+1][j]!=agent )	return false;
 	if( j+1<BOARD_SIZE && data[i][j+1]!=agent )	return false;
-	int count = 0;  // count the number of the shoulders occupied by the rival
-	if( i-1>=0 && j-1>=0 && data[i-1][j-1]!=GO_NULL && data[i-1][j-1]!=agent )	count++;
-	if( i-1>=0 && j+1>=0 && data[i-1][j+1]!=GO_NULL && data[i-1][j+1]!=agent )	count++;
-	if( i+1<BOARD_SIZE && j-1>=0 && data[i+1][j-1]!=GO_NULL && data[i+1][j-1]!=agent )	count++;
-	if( i+1<BOARD_SIZE && j+1<BOARD_SIZE && data[i+1][j+1]!=GO_NULL && data[i+1][j+1]!=agent )	count++;
+	int cnt = 0;  // cnt the number of the shoulders occupied by the rival
+	if( i-1>=0 && j-1>=0 && data[i-1][j-1]!=GO_NULL && data[i-1][j-1]!=agent )	cnt++;
+	if( i-1>=0 && j+1<BOARD_SIZE && data[i-1][j+1]!=GO_NULL && data[i-1][j+1]!=agent )	cnt++;
+	if( i+1<BOARD_SIZE && j-1>=0 && data[i+1][j-1]!=GO_NULL && data[i+1][j-1]!=agent )	cnt++;
+	if( i+1<BOARD_SIZE && j+1<BOARD_SIZE && data[i+1][j+1]!=GO_NULL && data[i+1][j+1]!=agent )	cnt++;
 	if( i==0 || i==BOARD_SIZE-1 || j==0 || j==BOARD_SIZE-1 ){
-		if( count>=1 ) return false;
+		if( cnt>=1 ) return false;
 	}
-	else if( count>=2 ) return false;
+	else if( cnt>=2 ) return false;
 	return true;
 }
 
@@ -522,55 +767,65 @@ inline void Board::resetReserve(){
 	return;
 }
 
-void Board::updateGoodPlace(int agent,int row,int col){
-	int cand[30];
-	// chang or peng
-	cand[0] = getIdxS(row-1,col);
-	cand[1] = getIdxS(row,col-1);
-	cand[2] = getIdxS(row+1,col);
-	cand[3] = getIdxS(row,col+1);
-	// jian
-	cand[4] = getIdxS(row-1,col-1);
-	cand[5] = getIdxS(row-1,col+1);
-	cand[6] = getIdxS(row+1,col-1);
-	cand[7] = getIdxS(row+1,col+1);
-	// xiaofei or gua
-	cand[8] = getIdxS(row-2,col-1);
-	cand[9] = getIdxS(row-1,col-2);
-	cand[10] = getIdxS(row+1,col-2);
-	cand[11] = getIdxS(row+2,col-1);
-	cand[12] = getIdxS(row+2,col+1);
-	cand[13] = getIdxS(row+1,col+2);
-	cand[14] = getIdxS(row-1,col+2);
-	cand[15] = getIdxS(row-2,col+1);
-	// dafei or dagua
-	cand[16] = getIdxS(row-3,col-1);
-	cand[17] = getIdxS(row-1,col-3);
-	cand[18] = getIdxS(row+1,col-3);
-	cand[19] = getIdxS(row+3,col-1);
-	cand[20] = getIdxS(row+3,col+1);
-	cand[21] = getIdxS(row+1,col+3);
-	cand[22] = getIdxS(row-1,col+3);
-	cand[23] = getIdxS(row-3,col+1);
-	// guan
-	cand[24] = getIdxS(row-2,col);
-	cand[25] = getIdxS(row,col-2);
-	cand[26] = getIdxS(row+2,col);
-	cand[27] = getIdxS(row,col+2);
-	for (int i=0; i<16; i++) {
-		if( cand[i]>=0 ){
-			goodplace[cand[i]][0] = goodplace[cand[i]][1] = 1;
-		}
-	}
-	for (int i=24; i<28; i++) {
-		if( cand[i]>=0 ){
-			goodplace[cand[i]][agent-1] = 1;
-		}
-	}
+inline bool Board::checkKeyPlace(int agent,int row,int col){
+	int enemy = 3 - agent;
+
+	bool at_chase = checkChase(agent, row, col);
+	bool at_kill = checkKill(agent, row, col);
+	bool at_survive = checkSurvive(agent, row, col);
+	if ( at_chase || at_kill || at_survive ) return true;
+	return false;
 }
 
 inline bool Board::checkGoodPlace(int agent,int row,int col){
-	return goodplace[row*BOARD_SIZE+col][agent-1];
+	int enemy = 3 - agent;
+	
+	int idx = row*BOARD_SIZE+col;
+	bool at_front =( distance[idx][agent-1]-distance[idx][enemy-1] <= 1 && distance[idx][enemy-1] <= 3);
+
+	if ( at_front ) return true;
+	return false;
+}
+
+inline bool Board::checkNeighbour(int agent,int row,int col){
+	if( false
+	// chang or peng
+	|| checkPiece(agent,row-1,col)
+	|| checkPiece(agent,row,col-1)
+	|| checkPiece(agent,row+1,col)
+	|| checkPiece(agent,row,col+1)
+	// jian
+	|| checkPiece(agent,row-1,col-1)
+	|| checkPiece(agent,row-1,col+1)
+	|| checkPiece(agent,row+1,col-1)
+	|| checkPiece(agent,row+1,col+1)
+	// xiaofei or gua
+	|| checkPiece(agent,row-2,col-1)
+	|| checkPiece(agent,row-1,col-2)
+	|| checkPiece(agent,row+1,col-2)
+	|| checkPiece(agent,row+2,col-1)
+	|| checkPiece(agent,row+2,col+1)
+	|| checkPiece(agent,row+1,col+2)
+	|| checkPiece(agent,row-1,col+2)
+	|| checkPiece(agent,row-2,col+1)
+	// dafei or dagua
+	//|| checkPiece(agent,row-3,col-1)
+	//|| checkPiece(agent,row-1,col-3)
+	//|| checkPiece(agent,row+1,col-3)
+	//|| checkPiece(agent,row+3,col-1)
+	//|| checkPiece(agent,row+3,col+1)
+	//|| checkPiece(agent,row+1,col+3)
+	//|| checkPiece(agent,row-1,col+3)
+	//|| checkPiece(agent,row-3,col+1)
+	// guan
+	|| checkPiece(agent,row-2,col)
+	|| checkPiece(agent,row,col-2)
+	|| checkPiece(agent,row+2,col)
+	|| checkPiece(agent,row,col+2)
+	){
+		return true;
+	}
+	return false;
 }
 
 void Board::updateDistance(int agent,int row,int col){
@@ -623,4 +878,48 @@ inline bool Board::checkDistFar(int agent,int row,int col){
 	int enemy = 3 - agent;
 	int threshold = -1;
 	return ( distance[row*BOARD_SIZE+col][agent-1]-distance[row*BOARD_SIZE+col][enemy-1] >= threshold );
+}
+
+bool Board::checkNoSense(int agent, int row, int col){
+	int enemy = 3 - agent;
+	int nb_self_1 = 0, nb_enemy_1 = 0, nb_self_2 = 0, nb_enemy_2 = 0;
+	int range = 1;
+	for( int i = row-range; i<=row+range; i++ ){
+		for( int j = col-range; j<=col+range; j++ ){
+			if ( i==row && j==col ) continue;
+			if( checkPiece(agent,i,j) ) nb_self_1++;
+			else if ( checkPiece(enemy,i,j) ) nb_enemy_1++;
+		}
+	}
+	bool at_border = (row==0 || row==BOARD_SIZE-1 || col==0 || col==BOARD_SIZE-1);
+	bool at_islbd = ( nb_enemy_1+nb_self_1==0 ) && at_border;
+	range = 2;
+	for( int i = row-range; i<=row+range; i++ ){
+		for( int j = col-range; j<=col+range; j++ ){
+			if ( i==row && j==col ) continue;
+			if( checkPiece(agent,i,j) ) nb_self_2++;
+			else if ( checkPiece(enemy,i,j) ) nb_enemy_2++;
+		}
+	}
+	bool near_border = (row<=1 || row>=BOARD_SIZE-2 || col<=1 || col>=BOARD_SIZE-2);
+	bool near_islbd = ( nb_enemy_2+nb_self_2==0 ) && near_border;
+	
+	if( at_islbd || near_islbd ) return true;
+}
+
+int Board::countScore(int agent){
+	int count = 0;
+	for(int i=0; i<BOARD_SIZE; i++){
+		for(int j=0; j<BOARD_SIZE; j++){
+			if( data[i][j]==agent ){
+				count++;
+			}
+			else if( data[i][j]==GO_NULL ){
+				if( (j>0 && data[i][j-1]==agent) || (j==0 && data[i][j+1]==agent) ){
+					count++;
+				}
+			}
+		}
+	}
+	return count;
 }
