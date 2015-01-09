@@ -373,7 +373,13 @@ class MyGame:public GTPAdapter
 	void onClear()
 	{
 		step=0;
-		step=0;
+		for(int i=0;i<13;i++)
+		{
+			for(int j=0;j<13;j++)
+			{
+				can[i][j]=0;
+			}
+		}
 	}
 	void onBoardSize(int sz)
 	{
@@ -695,7 +701,8 @@ int _tmain(int argc, _TCHAR* argv[])
 		index_cnsv = _wtof(argv[8]);
 	}
 	dinitdbg();
-	dprintf("%f %f %f\n",index_a,index_b,index_c);
+	dprintf("%f %f %f %f %f %f %f %f\n",index_a,index_b,index_c,
+		index_amaf_a1,index_amaf_a2,index_amaf_b1,index_amaf_b2,index_cnsv);
 	dprintf("sz bd %d\n",sizeof(Board));
 	srand(time(0));
 	MyGame gm;
