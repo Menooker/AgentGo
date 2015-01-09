@@ -1,6 +1,6 @@
 #ifndef _H_GTPADAPTER_
 #define _H_GTPADAPTER_
-#include "GoContest\Board.h"
+#include "Board.h"
 
 class GTPAdapter
 {

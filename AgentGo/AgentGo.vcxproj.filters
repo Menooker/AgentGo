@@ -42,16 +42,19 @@
     <ClInclude Include="TinyOP.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="GoContest\Board.h">
+    <ClInclude Include="UCTree.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="GoContest\Piece.h">
+    <ClInclude Include="AgentGo.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="GoContest\SetNode.h">
+    <ClInclude Include="Board.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="GoContest\AgentGo.h">
+    <ClInclude Include="Piece.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SetNode.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -74,16 +77,19 @@
     <ClCompile Include="CpuCount.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GoContest\Board.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="DbgPipe.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GoContest\Piece.cpp">
+    <ClCompile Include="UCTree.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GoContest\SetNode.cpp">
+    <ClCompile Include="Board.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Piece.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SetNode.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

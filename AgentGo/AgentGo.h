@@ -1,8 +1,8 @@
 #pragma once
 // the head file of the whole library of AgentGo
  
-#include "..\Config.h"
-#include "..\DbgPipe.h"
+#include "Config.h"
+#include "DbgPipe.h"
 //#define GO_BOARD_TIME
 #define GO_DEBUG
 //#define GO_HISTORY
