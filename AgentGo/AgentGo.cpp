@@ -71,9 +71,9 @@ public:
 class MyWorker:public Scheduler
 {
 public:
-	MyWorker(bool b)
+	MyWorker()
 	{
-		Scheduler::Scheduler(b);
+		Scheduler::Scheduler();
 	}
 	void work(TJob* j)
 	{
@@ -355,6 +355,7 @@ class MyGame:public GTPAdapter
 {
 	int step;
 	bool can[17][17];
+	MyWorker psch;
 	void boundedWaiting(Scheduler* psch)
 	{
 /*			if(!psch->wait(5000))
@@ -575,7 +576,7 @@ class MyGame:public GTPAdapter
 		else if (step>4)
 		{
 			MyJob* jobs[13][13]={0};
-			MyWorker* psch=new MyWorker(true);
+			
 			int avrg_win = testAvrgWin(isW);
 			/////////////submit the jobs
 				for( int i=0;i<13;i++)
@@ -597,13 +598,11 @@ class MyGame:public GTPAdapter
 						jobs[i][j]->j=j;
 						jobs[i][j]->isWh=isW;
 						jobs[i][j]->avrg_win=avrg_win;
-						psch->submit(jobs[i][j],1);
 					}
 				}
 			/////run the threads and wait for the work completes
-			psch->go();
-			psch->wait();
-			delete psch;
+			psch.go();
+			psch.wait();
 		
 			/////delete "jobs"
 			double max_score;

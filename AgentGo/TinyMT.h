@@ -372,7 +372,7 @@ private:
                                                 PTP_WORK Work)
 	{
 		SJob* sj=(SJob*)Context;
-		sj->psch->work((TJob*)Context);
+		sj->psch->work((SJob*)Context);
 		InterlockedDecrement(&sj->psch->cnt);
 		if(sj->psch->cnt<=0)
 			SetEvent(sj->psch->fevent);
