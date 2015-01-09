@@ -7,7 +7,7 @@
 #include "DbgPipe.h"
 #include <time.h>
 #include <stdlib.h>
-#include "GoContest\Board.h"
+#include "Board.h"
 #include "TinyOP.h"
 
 using namespace TinyMT;
