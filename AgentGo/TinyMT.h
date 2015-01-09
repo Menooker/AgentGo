@@ -341,10 +341,123 @@ public:
 };
 
 
+
+
+#if defined(TMT_ON_WINDOWS) && defined(TMT_USE_WIN_API)
+class Scheduler;
+class SWorker:public TWorker
+{};
+
+class SJob:public TJob
+{
+public:
+	Scheduler* psch;
+};
+
+class Scheduler
+{
+public:
+	HANDLE fevent;
+	long cnt;
+	virtual void work(TJob* j){};
+private:
+
+	PTP_WORK tpWork;  
+    PTP_POOL pPool;
+    TP_CALLBACK_ENVIRON pcbe;
+    PTP_CLEANUP_GROUP pCleanGroup;
+
+	static VOID CALLBACK WorkCallBack(PTP_CALLBACK_INSTANCE Instance,
+                                                PVOID Context,
+                                                PTP_WORK Work)
+	{
+		SJob* sj=(SJob*)Context;
+		sj->psch->work((TJob*)Context);
+		InterlockedDecrement(&sj->psch->cnt);
+		if(sj->psch->cnt<=0)
+			SetEvent(sj->psch->fevent);
+		CloseThreadpoolWork(Work);//关闭工作项
+	}
+
+
+	void InitScheduler(int worker_cnt,bool terminate_when_empty)
+	{
+		
+		fevent=CreateEvent(0,1,0,0);
+		cnt=0;
+        pPool = CreateThreadpool(NULL);//创建新的线程池
+        SetThreadpoolThreadMinimum(pPool,1);//设置线程池最小线程数目
+        SetThreadpoolThreadMaximum(pPool,worker_cnt);//设置线程池最大线程数目
+        InitializeThreadpoolEnvironment(&pcbe);//初始化一个回调环境
+        SetThreadpoolCallbackPool(&pcbe,pPool);//将回调环境与刚刚创建的线程池关联起来
+        pCleanGroup = CreateThreadpoolCleanupGroup();//创建一个清理组
+        SetThreadpoolCallbackCleanupGroup(&pcbe,pCleanGroup,NULL);//将清理组与回调环境关联起来
+	}
+public:
+	static unsigned get_default_threads()
+	{
+		return core_count()*2+2;
+	}
+	Scheduler(int worker_cnt,bool terminate_when_empty)
+	{
+		InitScheduler(worker_cnt,terminate_when_empty);
+	}
+
+	Scheduler(int worker_cnt)
+	{
+		InitScheduler(worker_cnt,true);
+	}
+
+	Scheduler(bool terminate_when_empty)
+	{
+		InitScheduler(get_default_threads(),terminate_when_empty);
+	}
+
+	Scheduler()
+	{
+		InitScheduler(get_default_threads(),true);
+	}
+	~Scheduler()
+	{
+        CloseHandle(fevent);
+        CloseThreadpoolCleanupGroupMembers(pCleanGroup,FALSE,NULL);//清除清理组成员
+        CloseThreadpoolCleanupGroup(pCleanGroup);//关闭清理组
+        DestroyThreadpoolEnvironment(&pcbe);//销毁回调环境
+        CloseThreadpool(pPool);//关闭线程池
+	}
+
+	void submit(SJob* j,int i)
+	{
+		submit(j);
+	}
+
+	void submit(SJob* j)
+	{
+		j->psch=this;
+		InterlockedIncrement(&cnt);
+		ResetEvent(fevent);
+        PTP_WORK pWork = CreateThreadpoolWork(WorkCallBack,j,&pcbe);//创建一个线程池工作项,并指定回调环境
+		SubmitThreadpoolWork(pWork);//提交该工作项的四次请求
+	}
+
+	void go()
+	{
+		//WaitForThreadpoolWorkCallbacks(pWork,FALSE);//等待请求处理完毕
+	}
+
+	void wait()
+	{
+		WaitForSingleObject(fevent,-1);
+	}
+
+	void end()
+	{
+		//fix-me : not implemented
+	}
+};
+#else
 template<typename  T> class Scheduler;
 class SWorker;
-
-	
 template<typename  T> class Scheduler
 {
 private:
@@ -772,7 +885,8 @@ public:
 		scheduler->askjob(this);
 	}
 };
-
+#endif
 }
+
 
 #endif

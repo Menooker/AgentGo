@@ -3,6 +3,7 @@
 using namespace TinyMT;
 class MyWorker2:public SWorker
 {
+public:
 	void work(TJob* j)
 	{
 		
@@ -11,11 +12,11 @@ class MyWorker2:public SWorker
 int s()
 {
 	TJob j[100];
-	Scheduler<MyWorker2> sch(10,false);
+	Scheduler sch(10,false);
 	for( int i=0;i<100;i++)
 	{
 
-		sch.submit(&j[i]);
+		//sch.submit(&j[i]);
 		//t[i].start(&j[i]);
 	}
 	sch.go();

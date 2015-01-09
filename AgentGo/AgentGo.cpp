@@ -35,7 +35,7 @@ class MyObject: public TObject
 
 }myobj;
 TObject ooo;
-class MyJob:public TJob
+class MyJob:public SJob
 {
 public:
 	Board* bd;
@@ -68,8 +68,13 @@ public:
 
 
 
-class MyWorker:public SWorker
+class MyWorker:public Scheduler
 {
+public:
+	MyWorker(bool b)
+	{
+		Scheduler::Scheduler(b);
+	}
 	void work(TJob* j)
 	{
 		MyJob* mj=(MyJob*)j;
@@ -350,9 +355,9 @@ class MyGame:public GTPAdapter
 {
 	int step;
 	bool can[17][17];
-	void boundedWaiting(Scheduler<MyWorker>* psch)
+	void boundedWaiting(Scheduler* psch)
 	{
-			if(!psch->wait(5000))
+/*			if(!psch->wait(5000))
 			{
 				dprintf("Wait time expired\n");
 				psch->abort();
@@ -368,7 +373,7 @@ class MyGame:public GTPAdapter
 							break;
 					}
 				}
-			}
+			}*/
 	}
 	void onClear()
 	{
@@ -570,7 +575,7 @@ class MyGame:public GTPAdapter
 		else if (step>4)
 		{
 			MyJob* jobs[13][13]={0};
-			Scheduler<MyWorker>* psch=new Scheduler<MyWorker>(true);
+			MyWorker* psch=new MyWorker(true);
 			int avrg_win = testAvrgWin(isW);
 			/////////////submit the jobs
 				for( int i=0;i<13;i++)
