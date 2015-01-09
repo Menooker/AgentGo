@@ -16,6 +16,7 @@ private:
 	virtual void onBoardSize(int sz){}
 	virtual void onPlay(int isW,int a,int b)=0;
 	virtual bool onMove(int isW,int& a,int&b)=0;
+	virtual void onMoved(int isW,int a,int b)=0;
 public:
 	void MainLoop();
 	GTPAdapter()
