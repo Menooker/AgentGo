@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <Windows.h>
-#include "../AgentGo/GoContest/Board.h"
+#include "../AgentGo/Board.h"
 #include <WinSock.h>
 #pragma comment(lib, "WS2_32") 
 

@@ -32,16 +32,16 @@
     <ClCompile Include="GeneHatchery.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\AgentGo\GoContest\Board.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="..\AgentGo\DbgPipe.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\AgentGo\GoContest\Piece.cpp">
+    <ClCompile Include="..\AgentGo\Board.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\AgentGo\GoContest\SetNode.cpp">
+    <ClCompile Include="..\AgentGo\Piece.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AgentGo\SetNode.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
