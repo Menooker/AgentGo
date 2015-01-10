@@ -242,6 +242,7 @@ HANDLE CreateRedirectedProcess(WCHAR* path,int index)
 		&piProcInfo))     // receives PROCESS_INFORMATION  
 	{
 		CloseHandle(piProcInfo.hThread);
+		WaitForInputIdle(piProcInfo.hProcess,-1);
 		return piProcInfo.hProcess;
 
 	}
@@ -724,10 +725,10 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 	ServerConfig sc;
 	int s1,s2,j;
 	int slave_rnd=cnt/(slaves+1);
-	FILE* outfile=fopen("bests.csv","a+");
+	
 	for(int rnd=0;rnd<rounds;rnd++)
 	{
-		FILE* fp=fopen("progress.ghp","wb");
+		FILE* fp=fopen("progress.ghp","wb"); // write the current genes
 		fwrite(&MUTATION_RATE,sizeof(MUTATION_RATE),1,fp);
 		fwrite(&MUTATION_PERCENTAGE,sizeof(MUTATION_PERCENTAGE),1,fp);
 		fwrite(&slaves,sizeof(slaves),1,fp);
@@ -744,7 +745,7 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 
 		int ii=0;
 		ServerPendingCnt = slave_rnd * slaves;
-		for(int i=0;i<slaves;i++)
+		for(int i=0;i<slaves;i++) // dispatch the tasks
 		{
 			for(int j=0;j<slave_rnd;j++)
 			{
@@ -774,16 +775,21 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 			//s2=s1;
 			scores[i]= (s1+s2)/2;
 		}
-		if(slaves)
+		if(slaves) // wait for slaves 
 			WaitForSingleObject(hEvent,-1);
-		bubble(scores,sort_index,cnt);
+		bubble(scores,sort_index,cnt); // sort the scores
 
+		FILE* outfile=fopen("bests.csv","a+"); // print the result in table
 		fprintf(outfile,"%d",rnd);
+		double sum=0;
 		for(int i=0;i<DNAs;i++)
 		{
 			fprintf(outfile,",%lf",hatchery[sort_index[0]][i]);
 		}
-		fprintf(outfile,",%d\n",scores[sort_index[0]]);
+		for(int i=0;i<cnt;i++)
+			sum+=scores[i];
+		fprintf(outfile,",%d,%lf\n",scores[sort_index[0]],sum/cnt);
+		fclose(outfile);
 
 		for(int i=cnt/2;i<cnt;i++)
 		{
@@ -793,7 +799,7 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 		}
 
 	}
-	fclose(outfile);
+	
 	free(sort_index);
 	free(scores);
 	free(data);
