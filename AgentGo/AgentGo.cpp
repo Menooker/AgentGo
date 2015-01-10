@@ -8,6 +8,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include "Board.h"
+#include "UCTree.h"
 #include "TinyOP.h"
 
 using namespace TinyMT;
@@ -35,7 +36,7 @@ class MyObject: public TObject
 
 }myobj;
 TObject ooo;
-class MyJob:public TJob
+class AmafJob:public TJob
 {
 public:
 	Board* bd;
@@ -43,9 +44,9 @@ public:
 	int j;
 	int isWh;
 	int avrg_win;
-	int mark[13][13];
-	int mark2[13][13];
-	MyJob(Board& old)
+	int cstep[13][13];
+	int cstep2[13][13];
+	AmafJob(Board& old)
 	{
 		bd=boardpool.tnew(&old);
 		//bd=new Board(old);
@@ -53,14 +54,30 @@ public:
 		{
 			for (int j=0;j<13;++j)
 			{
-				mark[i][j]=0;
+				cstep[i][j]=0;
+				cstep2[i][j]=0;
 			}
 		}
 	}
-	~MyJob()
+	~AmafJob()
 	{
 		boardpool.tdelete(bd);
 		//delete bd;
+	}
+};
+
+class NodeScoreJob:public TJob
+{
+public:
+	UCNode* node;
+	int isWh;
+	int first_player;
+	NodeScoreJob(UCNode* nd_ptr)
+	{
+		node = nd_ptr;
+	}
+	~NodeScoreJob()
+	{
 	}
 };
 
@@ -68,11 +85,12 @@ public:
 
 
 
-class MyWorker:public SWorker
+
+class AmafWorker:public SWorker
 {
 	void work(TJob* j)
 	{
-		MyJob* mj=(MyJob*)j;
+		AmafJob* mj=(AmafJob*)j;
 		int agent = mj->isWh + 1;
 		int enemy = 3 - agent;
 		int row = mj->i;
@@ -284,8 +302,8 @@ class MyWorker:public SWorker
 		for (int ii=0;ii<numset;++ii)
 		{
 			mj->bd->clone(bdnew);
-			memset(mj->mark,0,sizeof(int)*13*13);
-			memset(mj->mark2,0,sizeof(int)*13*13);
+			memset(mj->cstep,0,sizeof(int)*13*13);
+			memset(mj->cstep2,0,sizeof(int)*13*13);
 			bool agent_go=1;
 			bool enemy_go=1;
 			int cstep=1;
@@ -299,22 +317,17 @@ class MyWorker:public SWorker
 				if (!rand.isEmpty()){
 					mj->bd->put(rand);
 					enemy_go = true;
-					if(mj->mark2[rand.row][rand.col]==0) mj->mark2[rand.row][rand.col]=cstep;
+					if(mj->cstep2[rand.row][rand.col]==0) mj->cstep2[rand.row][rand.col]=cstep;
 				}
 				else{
 					enemy_go = false;
 					mj->bd->pass(enemy);
 				}
 				rand=mj->bd->getRandomPiece(agent);
-				/*int count = 0;
-				while( cstep<=2 && count<=5 && abs(rand.row-row)+abs(rand.col-col)>6 ){
-					rand = mj->bd->getRandomPiece(agent);
-					count++;
-				}*/
 				if (!rand.isEmpty()){
 					mj->bd->put(rand);
 					agent_go = true;
-					if(mj->mark[rand.row][rand.col]==0) mj->mark[rand.row][rand.col]=cstep;
+					if(mj->cstep[rand.row][rand.col]==0) mj->cstep[rand.row][rand.col]=cstep;
 				}
 				else{
 					agent_go = false;
@@ -326,31 +339,73 @@ class MyWorker:public SWorker
 			double score = (win_rltv>=0)? win_rltv : win_rltv*cnsv;
 			for (int i=0;i<13;++i){
 				for (int j=0;j<13;++j){
-					if (mj->mark[i][j]!=0 && mj->mark[i][j]<=AMAF_RANGE){
-						amaf1[i][j] += (100*amaf[mj->mark[i][j]-1])*score*index_c;
+					if (mj->cstep[i][j]!=0 && mj->cstep[i][j]<=AMAF_RANGE){
+						amaf1[i][j] += (100*amaf[mj->cstep[i][j]-1])*score*index_c;
 					}
-					else if (mj->mark2[i][j]!=0 && mj->mark2[i][j]<=AMAF_RANGE){
-						amaf2[i][j] -= (100*amaf[mj->mark2[i][j]-1])*score*index_c;
+					else if (mj->cstep2[i][j]!=0 && mj->cstep2[i][j]<=AMAF_RANGE){
+						amaf2[i][j] -= (100*amaf[mj->cstep2[i][j]-1])*score*index_c;
 					}
 				}
 			}
 			total_mark[row][col] += (100)*score*index_c;
 			mc[row][col] += (100)*score*index_c;
-			//dprintf("%d %d %f %f\n", mj->avrg_win, win_rltv, cnsv, score);
-
-			/*if( row==5 && col==11 ){
-				dprintf("10 0 mc:%f %f\n",(100)*score*index_c,total_mark[row][col]);
-			}*/
 		}
 	}
 };
 
+class NodeScoreWorker:public SWorker
+{
+	void work(TJob* j)
+	{
+		NodeScoreJob* mj=(NodeScoreJob*)j;
+		int agent = mj->isWh + 1;
+		int enemy = 3 - agent;
+		int numset = 1000;
+		
+		int sum_win = 0;
+		Board bdtest;
+		for (int ii=0;ii<numset;++ii){
+			bdtest.clone(mj->node->bd);
+			bool agent_go = 1;
+			bool enemy_go = 1;
+			bool started = false;
+			while (agent_go || enemy_go){
+				Piece rand;
+				if( started==true || started==false && mj->first_player==mj->isWh ){
+					rand=bdtest.getRandomPiece(agent);
+					if (!rand.isEmpty()){
+						bdtest.put(rand);
+						agent_go = true;
+					}
+					else{
+						agent_go = false;
+						bdtest.pass(agent);
+					}
+				}
+				rand=bdtest.getRandomPiece(enemy);
+				if (!rand.isEmpty()){
+					bdtest.put(rand);
+					enemy_go = true;
+				}
+				else{
+					enemy_go = false;
+					bdtest.pass(enemy);
+				}
+				started = true;
+			}
+			sum_win += bdtest.countScore(agent) - bdtest.countScore(enemy);
+		}
+
+		mj->node->score = ((double)sum_win)/numset;
+	}
+
+};
 
 class MyGame:public GTPAdapter
 {
 	int step;
 	bool can[17][17];
-	void boundedWaiting(Scheduler<MyWorker>* psch)
+	void boundedWaiting(Scheduler<AmafWorker>* psch)
 	{
 			if(!psch->wait(5000))
 			{
@@ -406,27 +461,31 @@ class MyGame:public GTPAdapter
 		}
 		dprintf("isW %d, a= %d ,b= %d\n",isW,a,b);
 	}
-	int testAvrgWin(bool isW){
-		int numset = 500;
+
+	// this function evaluates the situation for player isW under the situation of bd_base
+	// the next first move is made by first_player
+	int testAvrgWin(const Board &bd_base, bool isW, int numset, int first_player){
 		int sum_win = 0;
 		int agent = isW+1;
 		int enemy = 3 - agent;
 		Board bdtest;
 		for (int ii=0;ii<numset;++ii){
-			bdtest.clone(bd);
-			bool agent_go=1;
-			bool enemy_go=1;
+			bdtest.clone(bd_base);
+			bool agent_go = 1;
+			bool enemy_go = 1;
+			bool started = false;
 			while (agent_go || enemy_go){
-				// different from marking, here the first play is made by player himself
 				Piece rand;
-				rand=bdtest.getRandomPiece(agent);
-				if (!rand.isEmpty()){
-					bdtest.put(rand);
-					agent_go = true;
-				}
-				else{
-					agent_go = false;
-					bdtest.pass(agent);
+				if( started==true || started==false && first_player==isW ){
+					rand=bdtest.getRandomPiece(agent);
+					if (!rand.isEmpty()){
+						bdtest.put(rand);
+						agent_go = true;
+					}
+					else{
+						agent_go = false;
+						bdtest.pass(agent);
+					}
 				}
 				rand=bdtest.getRandomPiece(enemy);
 				if (!rand.isEmpty()){
@@ -437,12 +496,101 @@ class MyGame:public GTPAdapter
 					enemy_go = false;
 					bdtest.pass(enemy);
 				}
+				started = true;
 			}
 			sum_win += bdtest.countScore(agent) - bdtest.countScore(enemy);
 		}
 		//just return an integer rather than a float
 		return (sum_win/numset);
 	}
+
+	void expandUCNode(UCNode &node, int isW){
+		int i,j,k;
+		int node_player = node.player;
+
+		memset(amaf1,0,sizeof(double)*169);
+		memset(amaf2,0,sizeof(double)*169);
+		memset(mc,0,sizeof(double)*169);
+		memset(total_mark,0,sizeof(double)*169);
+		AmafJob* jobs[13][13]={0};
+		Scheduler<AmafWorker>* psch=new Scheduler<AmafWorker>(true);
+
+		// get a rough evalutaion of the situation for the node_player ( maybe not ourselves ), start from node_player
+		int avrg_win = testAvrgWin(node.bd, node_player, 500, node_player);	
+		// submit the jobs, evaluate the relative score for each position for the node_player
+			for( i=0; i<13; i++ )
+			{
+				for( j=0; j<13; j++ )
+				{
+					if( false
+						|| node.bd.checkTrueEye(isW+1,i,j)
+						|| node.bd.data[i][j]!=GO_NULL
+						|| node.bd.checkSuicide(isW+1,i,j)
+						|| node.bd.checkNoSense(isW+1,i,j)
+						|| node.bd.checkCompete(isW+1,i,j)
+					){	
+						continue;
+					}
+					jobs[i][j]=new AmafJob(node.bd);
+					jobs[i][j]->i=i;
+					jobs[i][j]->j=j;
+					jobs[i][j]->isWh=node_player;
+					jobs[i][j]->avrg_win=avrg_win;
+					psch->submit(jobs[i][j],1);
+				}
+			}
+		// run the threads and wait for the work completes
+		psch->go();
+		psch->wait();
+		delete psch;
+		
+		// sort the best choices for the nodeplayer, also delete "jobs"
+		double choice_mark[UCT_WIDTH];
+		Piece choices[UCT_WIDTH];
+		memset(choice_mark,-1.79E+308,sizeof(double)*UCT_WIDTH);
+		for ( i=0; i<13; ++i )
+		{
+			for ( j=0; j<13; ++j )
+			{
+				if (node.bd.data[i][j]==GO_NULL && !node.bd.checkTrueEye(isW+1,i,j) && !node.bd.checkSuicide(isW+1,i,j) && !node.bd.checkCompete(isW+1,i,j))
+				{
+					total_mark[i][j] += mc[i][j];
+					total_mark[i][j] += amaf1[i][j];
+					total_mark[i][j] += amaf2[i][j];
+					double tm = total_mark[i][j];
+
+					if( choice_mark[UCT_WIDTH-1] < tm ){
+						choice_mark[UCT_WIDTH-1] = tm;
+						choices[UCT_WIDTH-1] = Piece(node_player+1,i,j);
+					}
+					for( k=UCT_WIDTH-1; k>0; k-- ){
+						if( choice_mark[k] > choice_mark[k-1] ){
+							double temp_mark = choice_mark[k];
+							Piece temp_piece = choices[k];
+							choice_mark[k]= choice_mark[k-1];
+							choices[k] = choices[k-1];
+							choice_mark[k-1] = temp_mark;
+							choices[k-1] = temp_piece;
+ 						}
+						else break;
+					}
+				}
+				if(jobs[i][j])
+				{
+					delete jobs[i][j];
+					jobs[i][j]=0;
+				}
+			}
+		}
+
+		// append the choices as children to the node
+		node.expand();
+		for ( i=0; i<UCT_WIDTH; i++){
+			node.children[i]->move = choices[i];
+			if( !choices[i].isEmpty() ) node.children[i]->initBoard();
+		}
+	}
+
 	bool onMove(int isW,int& a,int& b)
 	{
 		// play random
@@ -456,10 +604,7 @@ class MyGame:public GTPAdapter
 		}*/
 		
 		//step = 5;
-		memset(amaf1,0,sizeof(double)*169);
-		memset(amaf2,0,sizeof(double)*169);
-		memset(mc,0,sizeof(double)*169);
-		memset(total_mark,0,sizeof(double)*169);
+
 		bool domove=0;
 		step+=1;
 		if (step>=1 && step<=4)
@@ -569,115 +714,41 @@ class MyGame:public GTPAdapter
 		}
 		else if (step>4)
 		{
-			MyJob* jobs[13][13]={0};
-			Scheduler<MyWorker>* psch=new Scheduler<MyWorker>(true);
-			int avrg_win = testAvrgWin(isW);
-			/////////////submit the jobs
-				for( int i=0;i<13;i++)
-				{
-					for(int j=0;j<13;j++)
-					{
-						// !can[i+2][j+2] || 
-						if( false
-							|| bd.checkTrueEye(isW+1,i,j)
-							|| bd.data[i][j]!=GO_NULL
-							|| bd.checkSuicide(isW+1,i,j)
-							|| bd.checkNoSense(isW+1,i,j)
-							|| bd.checkCompete(isW+1,i,j)
-						){	
-							continue;
-						}
-						jobs[i][j]=new MyJob(bd);
-						jobs[i][j]->i=i;
-						jobs[i][j]->j=j;
-						jobs[i][j]->isWh=isW;
-						jobs[i][j]->avrg_win=avrg_win;
-						psch->submit(jobs[i][j],1);
-					}
+			// construct the uct
+			UCTree uct(true,isW,bd);
+			expandUCNode(uct.root,isW);
+			for( int i=0; i<UCT_WIDTH; i++ ){
+				expandUCNode(*uct.root.children[i],isW);
+			}
+
+			// mark the score of leaf nodes
+			NodeScoreJob* jobs[UCT_WIDTH*UCT_WIDTH]={0};
+			Scheduler<NodeScoreWorker>* psch=new Scheduler<NodeScoreWorker>(true);
+			for( int i=0; i<UCT_WIDTH; i++ ){
+				UCNode* branch = uct.root.children[i];
+				for( int j=0; j<UCT_WIDTH; j++ ){
+					UCNode* leaf = branch->children[j];
+					int job_idx = i*UCT_WIDTH+j;
+					jobs[job_idx] = new NodeScoreJob(leaf);
+					jobs[job_idx]->isWh = isW;
+					jobs[job_idx]->first_player = 1-isW;
+					psch->submit(jobs[job_idx],1);
 				}
-			/////run the threads and wait for the work completes
+			}
 			psch->go();
 			psch->wait();
 			delete psch;
-		
-			/////delete "jobs"
-			double max_score;
-			bool max_init = false;
-			int max_i;
-			int max_j;
-			double avrg_scale_mc = 0;
-			double avrg_scale_amaf1 = 0;
-			double avrg_scale_amaf2 = 0;
-			/*for (int i=0;i<13;++i)
-			{
-				for (int j=0;j<13;++j)
-				{
-						if (!bd.checkTrueEye(isW+1,i,j) && bd.data[i][j]==GO_NULL && !bd.checkSuicide(isW+1,i,j) && !bd.checkCompete(isW+1,i,j))
-						{
-							tmp=total_mark[i][j];
-							tmp_i=i;
-							tmp_j=j;
-							domove=1;
-							break;
-						}
-				}
-				if (domove)
-				{
-					break;
-				}
+			for( int i=0; i<UCT_WIDTH*UCT_WIDTH; i++ ){
+				delete jobs[i];
+				jobs[i] = 0;
 			}
 
-			for (int i=0;i<13;++i)
-			{
-				for (int j=0;j<13;++j)
-						{
-							avrg_scale_mc += abs(mc[i][j]/169);
-							avrg_scale_amaf1 += abs(amaf1[i][j]/169);
-							avrg_scale_amaf2 += abs(amaf2[i][j]/169);
-						}
-				}
-			}*/
-			for (int i=0;i<13;++i)
-			{
-				for (int j=0;j<13;++j)
-				{
-					if (bd.data[i][j]==GO_NULL && !bd.checkTrueEye(isW+1,i,j) && !bd.checkSuicide(isW+1,i,j) && !bd.checkCompete(isW+1,i,j))
-					{
-						total_mark[i][j] += mc[i][j];
-						total_mark[i][j] += amaf1[i][j];
-						total_mark[i][j] += amaf2[i][j];
-						/*if( abs(mc[i][j]/avrg_scale_mc - amaf1[i][j]/avrg_scale_amaf1) > index_cmp_gap ) total_mark[i][j] += amaf1[i][j]*index_cmp_prp;
-						else total_mark[i][j] += amaf1[i][j];
-						if( abs(mc[i][j]/avrg_scale_mc - amaf2[i][j]/avrg_scale_amaf2) > index_cmp_gap ) total_mark[i][j] += amaf2[i][j]*index_cmp_prp;
-						else total_mark[i][j] += amaf2[i][j];
-						dprintf("cmp %d %d : %f %f \n",i,j,abs(mc[i][j]/avrg_scale_mc - amaf1[i][j]/avrg_scale_amaf1),abs(mc[i][j]/avrg_scale_mc - amaf2[i][j]/avrg_scale_amaf2));
-						*/
-						if( !max_init || total_mark[i][j]>max_score ){
-							max_score = total_mark[i][j];
-							max_i = i;
-							max_j = j;
-							max_init = true;
-							domove = true;
-						}
-					}
-					if(jobs[i][j])
-					{
-						delete jobs[i][j];
-						jobs[i][j]=0;
-					}
-				}
-			}
-			a = max_i;
-			b = max_j;
-			if( a==0 || b==0 || a==BOARD_SIZE-1 || b== BOARD_SIZE-1 ){
-				dprintf("border!");
-			}
-			// use random
-			/*if( step>3 ){
-				Piece p = bd.getRandomPiece(isW+1);
-				a = p.row;
-				b = p.col;
-			}*/
+			// minmax and make the move
+			Piece pc = uct.getBestMove();
+			if(!pc.isEmpty()) domove = true;
+			a = pc.row;
+			b = pc.col;
+			uct.clear();
 		}
 		if (domove)
 			return true;

@@ -4,31 +4,34 @@
 #include "Board.h"
 
 
-#define UCT_WIDTH 5
+#define UCT_WIDTH 3
 
+// when constructing a UCNode, one must assign its score,is_max
 struct UCNode
 {
 	    Piece move;
 		Board bd;
-		int score;
+		double score;
 		bool is_max;
+		bool is_leaf;
+		int player;
 		UCNode* children[UCT_WIDTH];
-		UCNode(){
-			for( int i=0; i<UCT_WIDTH; i++ ){
-				children[i] = 0;
-			}
-		};
-		void evaluate(){};
-		void minMax() {};
-}
+		UCNode* parent;
+		UCNode();
+		double minMax();
+		void expand();
+		void clear();
+		void initBoard();
+};
 
 class UCTree
 {
 public:
-	int deepth;
 	UCNode root;
-	UCTree(void);
+	UCTree(bool is_max, int player,const Board &bd);
 	~UCTree(void);
-	void init(const Board &bd, int width, int depth);
+	Piece getBestMove();
+	void clear();
+
 };
 
