@@ -99,8 +99,13 @@ DWORD __stdcall ServerRecvProc(ServerParam* p)
 			{
 				for(int i=0;i<cr->cnt;i++)
 				{
-					p->pscore[cr->data[i].id]=cr->data[i].sc;
-					printf("Remote Gene %d : %d\n",cr->data[i].id,cr->data[i].sc);
+					int index=cr->data[i].id;
+					int s2=cr->data[i].sc;
+					if(p->pscore[index]!=10086) // if it is an old gene
+						p->pscore[index]=(p->pscore[index] + s2)/2;
+					else
+						p->pscore[index]= s2;
+					printf("Remote Gene %d : %d\n",index,s2);
 				}
 				InterlockedExchangeAdd((LONG volatile *)&ServerPendingCnt,-cr->cnt);
 				if(ServerPendingCnt<=0)
@@ -539,7 +544,7 @@ int SimulateOneGame(double dna[],int ndna,int index[])
 					//bd.print();
 					lastwplay=true;
 				}
-				Sleep(250);
+				Sleep(100);
 
 			}
 			//bd.print();
@@ -650,17 +655,26 @@ void slave(char* ip,long port)
 				while(!Q.empty())
 				{
 					ServerConfig& cfg=Q.top();
-					int index[2] ={0,1};
+					int index[2] ={0,1};int s2;
 					rpy.data[ii].id =cfg.id;
-					printf("Testing gene : ");print_gene(cfg.dnas,cfg.ndna);
+					printf("Testing gene1: ");print_gene(cfg.dnas,cfg.ndna);
 					int s1=SimulateOneGame(cfg.dnas,cfg.ndna,index);
-					printf("score : %d\n",s1);
+					printf("score : %d\n",s1); s2=s1;
+
+					printf("Testing gene2: ");print_gene(cfg.dnas,cfg.ndna);
+					s1=SimulateOneGame(cfg.dnas,cfg.ndna,index);
+					printf("score : %d\n",s1); s2+=s1;
 
 					index[0]=1;index[1]=0;
-					printf("Testing gene : ");print_gene(cfg.dnas,cfg.ndna);
-					int s2= -SimulateOneGame(cfg.dnas,cfg.ndna,index);
-					printf("score : %d\n",s2);
-					rpy.data[ii].sc =(s1+s2)/2;
+					printf("Testing gene3: ");print_gene(cfg.dnas,cfg.ndna);
+					s1=-SimulateOneGame(cfg.dnas,cfg.ndna,index);
+					printf("score : %d\n",s1); s2+=s1;
+
+					printf("Testing gene4: ");print_gene(cfg.dnas,cfg.ndna);
+					s1=-SimulateOneGame(cfg.dnas,cfg.ndna,index);
+					printf("score : %d\n",s1); s2+=s1;
+
+					rpy.data[ii].sc =s2/4;
 					Q.pop();
 					ii++;
 				}
@@ -719,6 +733,8 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 
 	double** hatchery=(double**)malloc(sizeof(double*)*cnt);
 	int* scores=(int*)malloc(sizeof(int)*cnt);
+	for(int i=0;i<cnt;i++)
+		scores[i]=10086;
 	int* sort_index=(int*)malloc(sizeof(int)*cnt);
 
 	HANDLE* hThreads=(HANDLE*)malloc(sizeof(HANDLE)*slaves);
@@ -747,7 +763,7 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 
 	ServerConfig sc;
 	int s1,s2,j;
-	int slave_rnd=cnt/(slaves+1);
+	int slave_rnd=cnt/(slaves+1)+ (cnt%(slaves+1) ? 1:0);
 	
 	for(int rnd=0;rnd<rounds;rnd++)
 	{
@@ -772,6 +788,10 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 		{
 			for(int j=0;j<slave_rnd;j++)
 			{
+				if(ii>=cnt)
+				{
+					MessageBox(0,L"Error!!!",L"",32);
+				}
 				sc.Magic=132143;sc.Magic2=21439424;
 				sc.ndna=DNAs;
 				sc.id=ii;
@@ -787,16 +807,27 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 		for(int i=ii;i<cnt;i++)
 		{
 			int index[2]={0,1};
-			printf("%d:%d Testing gene : ",rnd,i);print_gene(hatchery[i],DNAs);
+			printf("%d:%d Testing gene1... ",rnd,i);//print_gene(hatchery[i],DNAs);
 			s1=SimulateOneGame(hatchery[i],DNAs,index);
-			printf("score : %d\n",s1);
+			printf("score : %d\n",s1); s2=s1;
+
+			printf("%d:%d Testing gene2... ",rnd,i);//print_gene(hatchery[i],DNAs);
+			s1=SimulateOneGame(hatchery[i],DNAs,index);
+			printf("score : %d\n",s1); s2+=s1;
 
 			index[0]=1;index[1]=0;
-			printf("%d:%d Testing gene : ",rnd,i);print_gene(hatchery[i],DNAs);
-			s2= -SimulateOneGame(hatchery[i],DNAs,index);
-			printf("score : %d\n",s2);
+			printf("%d:%d Testing gene3... ",rnd,i);//print_gene(hatchery[i],DNAs);
+			s1= -SimulateOneGame(hatchery[i],DNAs,index);
+			printf("score : %d\n",s1); s2+=s1;
+
+			printf("%d:%d Testing gene4... ",rnd,i);//print_gene(hatchery[i],DNAs);
+			s1= -SimulateOneGame(hatchery[i],DNAs,index);
+			printf("score : %d\n",s1); s2+=s1;
 			//s2=s1;
-			scores[i]= (s1+s2)/2;
+			if(scores[i]!=10086) // if it is an old gene
+				scores[i]=(scores[i]*4 + s2)/8;
+			else
+				scores[i]= s2/4;
 		}
 		if(slaves) // wait for slaves 
 			WaitForSingleObject(hEvent,-1);
@@ -814,11 +845,12 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 		fprintf(outfile,",%d,%lf\n",scores[sort_index[0]],sum/cnt);
 		fclose(outfile);
 
-		for(int i=cnt/2;i<cnt;i++)
+		for(int i=cnt/2;i<cnt;i++) // make the next generation
 		{
 			j=i-cnt/2;
 			mate(hatchery[sort_index[j]],hatchery[sort_index[j+1]],hatchery[sort_index[i]],DNAs);
 			validate_gene(hatchery[sort_index[i]],DNAs);
+			scores[sort_index[i]]=10086;
 		}
 
 	}
