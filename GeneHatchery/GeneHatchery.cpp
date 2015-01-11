@@ -173,9 +173,14 @@ DWORD __stdcall ServerProc(ServerParam* p)
         throw ExcBindErr;
     }
     printf("port %d accepted ：%s \n",p->port , inet_ntoa(remoteAddr.sin_addr));
-	/*send(sClient, sendData, strlen(sendData), 0);
+	ServerConfig cfg;
+	cfg.Magic=0x12345667;
+	cfg.Magic2=0x10086110;
+	cfg.dnas[0]=MUTATION_PERCENTAGE;
+	cfg.ndna=MUTATION_RATE;
+	send(p->sClient,(char*) &cfg, sizeof(cfg), 0);
     //接收数据
-    int ret = recv(sClient, revData, 255, 0);        
+    /*int ret = recv(sClient, revData, 255, 0);        
     if(ret > 0)
     {
         revData[ret] = 0x00;
@@ -189,7 +194,19 @@ DWORD __stdcall ServerProc(ServerParam* p)
     closesocket(slisten);*/
 	return 0;
 }
-
+void ClosePipes()
+{
+	CloseHandle(hStdInRead[0]);
+	CloseHandle(hStdInRead[1]);
+	CloseHandle(hStdInWrite[0]);
+	CloseHandle(hStdInWrite[1]);
+	CloseHandle(hStdOutRead[0]);
+	CloseHandle(hStdOutRead[1]);
+	CloseHandle(hStdOutWrite[0]);
+	CloseHandle(hStdOutWrite[1]);
+	CloseHandle(hStdErrWrite[0]);
+	CloseHandle(hStdErrWrite[1]);
+}
 
 void CreatePipes()
 {
@@ -410,6 +427,7 @@ int CalcResults(Board& bd)
 
 int SimulateOneGame(double dna[],int ndna,int index[])
 {
+	CreatePipes();
 	WCHAR path[MAX_PATH];
 	wcscpy_s(path,MAX_PATH,DebugeeExe);
 
@@ -428,7 +446,7 @@ int SimulateOneGame(double dna[],int ndna,int index[])
 	bool flg=false;
 	//try
 	//{
-
+	Sleep(1000);
 		MyPrintf(0,"clear_board\n");
 		IsReplyOK(0);
 		MyPrintf(0,"boardsize 13\n");
@@ -535,6 +553,7 @@ int SimulateOneGame(double dna[],int ndna,int index[])
 	TerminateProcess(hReference,0);
 	CloseHandle(hDebugee);
 	CloseHandle(hReference);
+	ClosePipes();
 	return dscore;
 }
 
@@ -575,7 +594,7 @@ void bubble(int d[],int outindex[],int len)
 
 void slave(char* ip,long port)
 {
-	CreatePipes();
+	
 	SOCKET sclient = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if(sclient == INVALID_SOCKET)
 	{
@@ -614,36 +633,41 @@ void slave(char* ip,long port)
 				print_gene(sc.dnas,sc.ndna);
 				
 			}
-			else
+			else if(sc.Magic==0x12345667 && sc.Magic2==0x10086110)
 			{
-				if(sc.Magic==0x90909090)
-				{
-					//MessageBox(0,L"K",L"",64);
-					printf("Go with %d tasks\n",cnt);
-					int ii=0;
+				MUTATION_PERCENTAGE=sc.dnas[0];
+				MUTATION_RATE=sc.ndna;
+				printf("Mutation rates: %d, percentage: %lf\n",MUTATION_RATE,MUTATION_PERCENTAGE);
+			}
+			else if(sc.Magic==0x90909090)
+			{
+				
+				//MessageBox(0,L"K",L"",64);
+				printf("Go with %d tasks\n",cnt);
+				int ii=0;
 					
-					rpy.Magic=0xFEFEFEFE;rpy.Magic2=0xAAAABBBB;
-					while(!Q.empty())
-					{
-						ServerConfig& cfg=Q.top();
-						int index[2] ={0,1};
-						rpy.data[ii].id =cfg.id;
-						printf("Testing gene : ");print_gene(cfg.dnas,cfg.ndna);
-						int s1=SimulateOneGame(cfg.dnas,cfg.ndna,index);
-						printf("score : %d\n",s1);
+				rpy.Magic=0xFEFEFEFE;rpy.Magic2=0xAAAABBBB;
+				while(!Q.empty())
+				{
+					ServerConfig& cfg=Q.top();
+					int index[2] ={0,1};
+					rpy.data[ii].id =cfg.id;
+					printf("Testing gene : ");print_gene(cfg.dnas,cfg.ndna);
+					int s1=SimulateOneGame(cfg.dnas,cfg.ndna,index);
+					printf("score : %d\n",s1);
 
-						index[0]=1;index[1]=0;
-						printf("Testing gene : ");print_gene(cfg.dnas,cfg.ndna);
-						int s2= -SimulateOneGame(cfg.dnas,cfg.ndna,index);
-						printf("score : %d\n",s2);
-						rpy.data[ii].sc =(s1+s2)/2;
-						Q.pop();
-						ii++;
-					}
-					rpy.cnt=ii;
-					cnt=0;
-					send(sclient,(char*)&rpy,sizeof(rpy),0);
+					index[0]=1;index[1]=0;
+					printf("Testing gene : ");print_gene(cfg.dnas,cfg.ndna);
+					int s2= -SimulateOneGame(cfg.dnas,cfg.ndna,index);
+					printf("score : %d\n",s2);
+					rpy.data[ii].sc =(s1+s2)/2;
+					Q.pop();
+					ii++;
 				}
+				rpy.cnt=ii;
+				cnt=0;
+				send(sclient,(char*)&rpy,sizeof(rpy),0);
+				
 			}
 
 		}
@@ -721,7 +745,6 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 		tmp+=DNAs;
 	}
 
-	CreatePipes();
 	ServerConfig sc;
 	int s1,s2,j;
 	int slave_rnd=cnt/(slaves+1);
@@ -967,17 +990,17 @@ int _tmain(int argc, _TCHAR* argv[])
 				{
 					if(!wcscmp(argv[i],L"-s") && i<argc-1)
 					{
-						if(!olddata)  slaves=_wtoi(argv[i+1]);
+						slaves=_wtoi(argv[i+1]);
 						i++;
 					}
 					else if(!wcscmp(argv[i],L"-mr") && i<argc-1)
 					{
-						if(!olddata)  MUTATION_RATE=_wtoi(argv[i+1]);
+						MUTATION_RATE=_wtoi(argv[i+1]);
 						i++;
 					}
 					else if(!wcscmp(argv[i],L"-mp") && i<argc-1)
 					{
-						if(!olddata)  MUTATION_PERCENTAGE=_wtof(argv[i+1]);
+						MUTATION_PERCENTAGE=_wtof(argv[i+1]);
 						i++;
 					}
 					else if(!wcscmp(argv[i],L"-f") && i<argc-1)
