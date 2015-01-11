@@ -8,7 +8,7 @@ int DpPrintf(char* str,...);
 #define dinitdbg InitDbgConsole
 #define dprintf DpPrintf
 #else
-#define dinitdbg
-#define dprintf 
+#define dinitdbg(...) 
+#define dprintf(...) 
 #endif
 #endif
