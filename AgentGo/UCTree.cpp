@@ -11,7 +11,7 @@ double UCNode::minMax(){
 	if( is_leaf ) return score;
 	score = children[0]->minMax();
 	for( int i=1; i<UCT_WIDTH; i++ ){
-		int score_child = children[i]->minMax();
+		double score_child = children[i]->minMax();
 		if( is_max && score_child>score) score = score_child;
 		else if ( !is_max && score_child<score) score = score_child;
 	}
@@ -36,7 +36,7 @@ void UCNode::clear(){
 
 void UCNode::initBoard(){
 	bd.clone(parent->bd);
-	if(move.isEmpty()) bd.pass(player);
+	if(move.isEmpty()) bd.pass(player+1);
 	else bd.put(move);
 }
 

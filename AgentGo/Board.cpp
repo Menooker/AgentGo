@@ -390,7 +390,7 @@ Piece Board::getRandomPiece(int agent){
 			//|| count<20 && !checkGoodPlace(agent,row,col)
 			//|| !checkNeighbour(agent,row,col)
 			//|| !checkDistFar(agent,row,col)
-			//|| checkNoSense(agent,row,col)
+			|| checkNoSense(agent,row,col)
 			|| checkDying(agent,row,col)
 			|| checkTrueEye(agent,row,col) 
 			|| checkSuicide(agent,row,col)
