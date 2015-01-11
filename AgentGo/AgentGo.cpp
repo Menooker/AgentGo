@@ -35,7 +35,7 @@ class MyObject: public TObject
 
 }myobj;
 TObject ooo;
-class MyJob:public SJob
+class MyJob:public TJob
 {
 public:
 	Board* bd;
@@ -68,13 +68,10 @@ public:
 
 
 
-class MyWorker:public Scheduler
+class MyWorker:public SWorker
 {
 public:
-	MyWorker()
-	{
-		Scheduler::Scheduler();
-	}
+	
 	void work(TJob* j)
 	{
 		MyJob* mj=(MyJob*)j;
@@ -355,8 +352,8 @@ class MyGame:public GTPAdapter
 {
 	int step;
 	bool can[17][17];
-	MyWorker psch;
-	void boundedWaiting(Scheduler* psch)
+	Scheduler<MyWorker> psch;
+	void boundedWaiting(Scheduler<MyWorker>* psch)
 	{
 /*			if(!psch->wait(5000))
 			{

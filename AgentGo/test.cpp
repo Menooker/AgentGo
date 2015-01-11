@@ -12,7 +12,7 @@ public:
 int s()
 {
 	TJob j[100];
-	Scheduler sch(10,false);
+	Scheduler<MyWorker2> sch(10,false);
 	for( int i=0;i<100;i++)
 	{
 

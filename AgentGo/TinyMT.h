@@ -134,7 +134,10 @@ public:
 
 class TJob
 {
-
+#if defined(TMT_ON_WINDOWS) & defined(TMT_USE_WIN_API)
+public:
+void* psch;
+#endif
 };
 
 struct JobItem
@@ -344,45 +347,39 @@ public:
 
 
 #if defined(TMT_ON_WINDOWS) && defined(TMT_USE_WIN_API)
-class Scheduler;
+template<typename  T> class Scheduler;
 class SWorker:public TWorker
 {};
 
-class SJob:public TJob
-{
-public:
-	Scheduler* psch;
-};
 
-class Scheduler
+template<typename  T> class Scheduler
 {
 public:
 	HANDLE fevent;
 	long cnt;
-	virtual void work(TJob* j){};
 private:
-
+	SWorker* pworker;
 	PTP_WORK tpWork;  
     PTP_POOL pPool;
     TP_CALLBACK_ENVIRON pcbe;
     PTP_CLEANUP_GROUP pCleanGroup;
-
 	static VOID CALLBACK WorkCallBack(PTP_CALLBACK_INSTANCE Instance,
                                                 PVOID Context,
                                                 PTP_WORK Work)
 	{
-		SJob* sj=(SJob*)Context;
-		sj->psch->work((SJob*)Context);
-		InterlockedDecrement(&sj->psch->cnt);
-		if(sj->psch->cnt<=0)
-			SetEvent(sj->psch->fevent);
+		TJob* sj=(TJob*)Context;
+		Scheduler<T>* pthis=(Scheduler<T>*)sj->psch;
+		pthis->work((TJob*)Context);
+		InterlockedDecrement(&pthis->cnt);
+		if(pthis->cnt<=0)
+			SetEvent(pthis->fevent);
 		CloseThreadpoolWork(Work);//关闭工作项
 	}
 
 
 	void InitScheduler(int worker_cnt,bool terminate_when_empty)
 	{
-		
+		pworker=(SWorker*)new T();
 		fevent=CreateEvent(0,1,0,0);
 		cnt=0;
         pPool = CreateThreadpool(NULL);//创建新的线程池
@@ -394,6 +391,10 @@ private:
         SetThreadpoolCallbackCleanupGroup(&pcbe,pCleanGroup,NULL);//将清理组与回调环境关联起来
 	}
 public:
+	void work(TJob* j)
+	{
+		pworker->work(j);
+	}
 	static unsigned get_default_threads()
 	{
 		return core_count()*2+2;
@@ -419,6 +420,7 @@ public:
 	}
 	~Scheduler()
 	{
+		delete pworker;
         CloseHandle(fevent);
         CloseThreadpoolCleanupGroupMembers(pCleanGroup,FALSE,NULL);//清除清理组成员
         CloseThreadpoolCleanupGroup(pCleanGroup);//关闭清理组
@@ -426,12 +428,12 @@ public:
         CloseThreadpool(pPool);//关闭线程池
 	}
 
-	void submit(SJob* j,int i)
+	void submit(TJob* j,int i)
 	{
 		submit(j);
 	}
 
-	void submit(SJob* j)
+	void submit(TJob* j)
 	{
 		j->psch=this;
 		InterlockedIncrement(&cnt);
