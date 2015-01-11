@@ -98,7 +98,7 @@ class AmafWorker:public SWorker
 		Board bd_copy(mj->bd);
 		mj->bd->put(agent,mj->i,mj->j);
 		
-		int numset=150;
+		int numset = NUMSET_AMAF;
 		int num_piece = mj->bd->num_black + mj->bd->num_white;
 		double num_a = 1/(index_amaf_a1-index_amaf_a2*num_piece);
 		double num_b = index_amaf_b1-index_amaf_b2*num_piece;
@@ -360,7 +360,7 @@ class NodeScoreWorker:public SWorker
 		NodeScoreJob* mj=(NodeScoreJob*)j;
 		int agent = mj->isWh + 1;
 		int enemy = 3 - agent;
-		int numset = 1000;
+		int numset = NUMSET_NODE_SCORE;
 		
 		int sum_win = 0;
 		Board bdtest;
@@ -403,7 +403,6 @@ class NodeScoreWorker:public SWorker
 
 class MyGame:public GTPAdapter
 {
-	int step;
 	bool can[17][17];
 	void boundedWaiting(Scheduler<AmafWorker>* psch)
 	{
@@ -427,7 +426,6 @@ class MyGame:public GTPAdapter
 	}
 	void onClear()
 	{
-		step=0;
 		for(int i=0;i<13;i++)
 		{
 			for(int j=0;j<13;j++)
@@ -463,11 +461,11 @@ class MyGame:public GTPAdapter
 	}
 
 	// this function evaluates the situation for player isW under the situation of bd_base
-	// the next first move is made by first_player
-	int testAvrgWin(const Board &bd_base, bool isW, int numset, int first_player){
+	int testAvrgWin(const Board &bd_base, int isW, int first_player){
 		int sum_win = 0;
 		int agent = isW+1;
 		int enemy = 3 - agent;
+		int numset = NUMSET_PRETEST;
 		Board bdtest;
 		for (int ii=0;ii<numset;++ii){
 			bdtest.clone(bd_base);
@@ -516,29 +514,29 @@ class MyGame:public GTPAdapter
 		Scheduler<AmafWorker>* psch=new Scheduler<AmafWorker>(true);
 
 		// get a rough evalutaion of the situation for the node_player ( maybe not ourselves ), start from node_player
-		int avrg_win = testAvrgWin(node.bd, node_player, 500, node_player);	
+		int avrg_win = testAvrgWin(node.bd, node_player, node_player);
 		// submit the jobs, evaluate the relative score for each position for the node_player
-			for( i=0; i<13; i++ )
+		for( i=0; i<13; i++ )
+		{
+			for( j=0; j<13; j++ )
 			{
-				for( j=0; j<13; j++ )
-				{
-					if( false
-						|| node.bd.checkTrueEye(isW+1,i,j)
-						|| node.bd.data[i][j]!=GO_NULL
-						|| node.bd.checkSuicide(isW+1,i,j)
-						|| node.bd.checkNoSense(isW+1,i,j)
-						|| node.bd.checkCompete(isW+1,i,j)
-					){	
-						continue;
-					}
-					jobs[i][j]=new AmafJob(node.bd);
-					jobs[i][j]->i=i;
-					jobs[i][j]->j=j;
-					jobs[i][j]->isWh=node_player;
-					jobs[i][j]->avrg_win=avrg_win;
-					psch->submit(jobs[i][j],1);
+				if( false
+					|| node.bd.checkTrueEye(isW+1,i,j)
+					|| node.bd.data[i][j]!=GO_NULL
+					|| node.bd.checkSuicide(isW+1,i,j)
+					|| node.bd.checkNoSense(isW+1,i,j)
+					|| node.bd.checkCompete(isW+1,i,j)
+				){	
+					continue;
 				}
+				jobs[i][j]=new AmafJob(node.bd);
+				jobs[i][j]->i=i;
+				jobs[i][j]->j=j;
+				jobs[i][j]->isWh=node_player;
+				jobs[i][j]->avrg_win=avrg_win;
+				psch->submit(jobs[i][j],1);
 			}
+		}
 		// run the threads and wait for the work completes
 		psch->go();
 		psch->wait();
@@ -547,7 +545,9 @@ class MyGame:public GTPAdapter
 		// sort the best choices for the nodeplayer, also delete "jobs"
 		double choice_mark[UCT_WIDTH];
 		Piece choices[UCT_WIDTH];
-		memset(choice_mark,-1.79E+308,sizeof(double)*UCT_WIDTH);
+		for( i=0; i<UCT_WIDTH; i++ ){
+			choice_mark[i] = -1.79E+308;
+		}
 		for ( i=0; i<13; ++i )
 		{
 			for ( j=0; j<13; ++j )
@@ -587,7 +587,7 @@ class MyGame:public GTPAdapter
 		node.expand();
 		for ( i=0; i<UCT_WIDTH; i++){
 			node.children[i]->move = choices[i];
-			if( !choices[i].isEmpty() ) node.children[i]->initBoard();
+			node.children[i]->initBoard();
 		}
 	}
 
@@ -602,12 +602,10 @@ class MyGame:public GTPAdapter
 			b = p.col;
 			return true;
 		}*/
-		
-		//step = 5;
-
+		dprintf("Evaluation: %d\n",testAvrgWin(bd,isW,isW));
+		return false;
 		bool domove=0;
-		step+=1;
-		if (step>=1 && step<=4)
+		if ( bd.num_black+bd.num_white <= 4 )
 		{
 			int takereg[9]={0};
 				int i,j;
@@ -710,9 +708,9 @@ class MyGame:public GTPAdapter
 					a=6;
 					b=6;
 				}
-			return true;
+			domove = true;
 		}
-		else if (step>4)
+		else
 		{
 			// construct the uct
 			UCTree uct(true,isW,bd);
@@ -731,7 +729,7 @@ class MyGame:public GTPAdapter
 					int job_idx = i*UCT_WIDTH+j;
 					jobs[job_idx] = new NodeScoreJob(leaf);
 					jobs[job_idx]->isWh = isW;
-					jobs[job_idx]->first_player = 1-isW;
+					jobs[job_idx]->first_player = isW;
 					psch->submit(jobs[job_idx],1);
 				}
 			}
