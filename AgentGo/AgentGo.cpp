@@ -15,7 +15,7 @@ using namespace TinyMT;
 TinyOP<Board> boardpool(1000);
 
 double total_mark[13][13];
-double index_a = 10000;
+double index_a = 1000;
 double index_b = 1;
 double index_c = 1;
 double index_amaf_a1 = 40;
@@ -595,6 +595,7 @@ class MyGame:public GTPAdapter
 						jobs[i][j]->j=j;
 						jobs[i][j]->isWh=isW;
 						jobs[i][j]->avrg_win=avrg_win;
+						psch.submit(jobs[i][j],1);
 					}
 				}
 			/////run the threads and wait for the work completes
