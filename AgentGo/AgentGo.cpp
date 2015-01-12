@@ -15,7 +15,7 @@ using namespace TinyMT;
 TinyOP<Board> boardpool(1000);
 
 double total_mark[13][13];
-double index_a = 10000;
+double index_a = 1000;
 double index_b = 1;
 double index_c = 1;
 double index_amaf_a1 = 40;
@@ -70,6 +70,8 @@ public:
 
 class MyWorker:public SWorker
 {
+public:
+	
 	void work(TJob* j)
 	{
 		MyJob* mj=(MyJob*)j;
@@ -350,9 +352,10 @@ class MyGame:public GTPAdapter
 {
 	int step;
 	bool can[17][17];
+	Scheduler<MyWorker> psch;
 	void boundedWaiting(Scheduler<MyWorker>* psch)
 	{
-			if(!psch->wait(5000))
+/*			if(!psch->wait(5000))
 			{
 				dprintf("Wait time expired\n");
 				psch->abort();
@@ -368,7 +371,7 @@ class MyGame:public GTPAdapter
 							break;
 					}
 				}
-			}
+			}*/
 	}
 	void onClear()
 	{
@@ -570,7 +573,7 @@ class MyGame:public GTPAdapter
 		else if (step>4)
 		{
 			MyJob* jobs[13][13]={0};
-			Scheduler<MyWorker>* psch=new Scheduler<MyWorker>(true);
+			
 			int avrg_win = testAvrgWin(isW);
 			/////////////submit the jobs
 				for( int i=0;i<13;i++)
@@ -592,13 +595,12 @@ class MyGame:public GTPAdapter
 						jobs[i][j]->j=j;
 						jobs[i][j]->isWh=isW;
 						jobs[i][j]->avrg_win=avrg_win;
-						psch->submit(jobs[i][j],1);
+						psch.submit(jobs[i][j],1);
 					}
 				}
 			/////run the threads and wait for the work completes
-			psch->go();
-			psch->wait();
-			delete psch;
+			psch.go();
+			psch.wait();
 		
 			/////delete "jobs"
 			double max_score;
