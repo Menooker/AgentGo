@@ -50,6 +50,11 @@ HANDLE  hStdErrWrite[2];       ///子进程用的stderr的写入端
 
 void validate_gene(double* d,int cnt)
 {
+	for(int i=0;i<cnt;i++)
+	{
+		if(d[i]<0)
+			d[i]=-d[i];
+	}
 }
 
 struct ServerParam

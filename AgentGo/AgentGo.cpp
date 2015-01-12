@@ -352,7 +352,7 @@ class MyGame:public GTPAdapter
 {
 	int step;
 	bool can[17][17];
-	Scheduler<MyWorker> psch;
+	Scheduler<MyWorker>* psch;
 	void boundedWaiting(Scheduler<MyWorker>* psch)
 	{
 /*			if(!psch->wait(5000))
@@ -573,7 +573,9 @@ class MyGame:public GTPAdapter
 		else if (step>4)
 		{
 			MyJob* jobs[13][13]={0};
-			
+#ifndef TMT_USE_WIN_API
+			psch=new Scheduler<MyWorker>(true);
+#endif			
 			int avrg_win = testAvrgWin(isW);
 			/////////////submit the jobs
 				for( int i=0;i<13;i++)
@@ -595,13 +597,16 @@ class MyGame:public GTPAdapter
 						jobs[i][j]->j=j;
 						jobs[i][j]->isWh=isW;
 						jobs[i][j]->avrg_win=avrg_win;
-						psch.submit(jobs[i][j],1);
+						psch->submit(jobs[i][j],1);
 					}
 				}
 			/////run the threads and wait for the work completes
-			psch.go();
-			psch.wait();
-		
+			psch->go();
+			psch->wait();
+			
+#ifndef TMT_USE_WIN_API
+			delete psch;
+#endif
 			/////delete "jobs"
 			double max_score;
 			bool max_init = false;
@@ -686,7 +691,17 @@ class MyGame:public GTPAdapter
 		else
 			return false;
 	}
-
+#ifdef TMT_USE_WIN_API
+public:
+	MyGame()
+	{
+		psch=new Scheduler<MyWorker>(true);
+	}
+	~MyGame()
+	{
+		delete psch;
+	}
+#endif
 };
 
 int _tmain(int argc, _TCHAR* argv[])
