@@ -14,6 +14,6 @@
 #define GO_BOTH      3
 #define BOARD_SIZE	 13
 #define AMAF_RANGE   40
-#define NUMSET_PRETEST 5000
+#define NUMSET_PRETEST 500
 #define NUMSET_AMAF 150
 #define NUMSET_NODE_SCORE 1500

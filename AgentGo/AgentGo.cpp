@@ -97,7 +97,7 @@ class AmafWorker:public SWorker
 		int col = mj->j;
 		Board bd_copy(mj->bd);
 		mj->bd->put(agent,mj->i,mj->j);
-		
+
 		int numset = NUMSET_AMAF;
 		int num_piece = mj->bd->num_black + mj->bd->num_white;
 		double num_a = 1/(index_amaf_a1-index_amaf_a2*num_piece);
@@ -112,8 +112,8 @@ class AmafWorker:public SWorker
 		int bonus_b = numset*index_b;
 		// degree of conservation, if relative score less than 0, it will be multiplied by this degree
 		// the larger the avrg_win the larger cnsv
-		double cnsv = pow(2., (mj->avrg_win)*index_cnsv);	
-
+		double cnsv = pow(2., (mj->avrg_win)*index_cnsv);
+		/*
 		//Ìá×Ó
 		//if( bd_copy.checkKill(agent,row,col) ) total_mark[row][col] += bonus_a;
 		//ËÀÆå
@@ -296,7 +296,7 @@ class AmafWorker:public SWorker
 		{
 			total_mark[row][col]+=bonus_b*20;
 		}
-
+		*/
 		// let the two random players to evaluate the situation
 		Board bdnew(mj->bd);
 		for (int ii=0;ii<numset;++ii)
@@ -361,7 +361,7 @@ class NodeScoreWorker:public SWorker
 		int agent = mj->isWh + 1;
 		int enemy = 3 - agent;
 		int numset = NUMSET_NODE_SCORE;
-		
+
 		int sum_win = 0;
 		Board bdtest;
 		for (int ii=0;ii<numset;++ii){
@@ -403,6 +403,7 @@ class NodeScoreWorker:public SWorker
 
 class MyGame:public GTPAdapter
 {
+	int step;
 	bool can[17][17];
 	void boundedWaiting(Scheduler<AmafWorker>* psch)
 	{
@@ -433,10 +434,11 @@ class MyGame:public GTPAdapter
 				can[i][j]=0;
 			}
 		}
+		step=0;
 	}
 	void onBoardSize(int sz)
 	{
-	
+
 	}
 	void onMoved(int isW,int a,int b)
 	{
@@ -526,7 +528,7 @@ class MyGame:public GTPAdapter
 					|| node.bd.checkSuicide(isW+1,i,j)
 					|| node.bd.checkNoSense(isW+1,i,j)
 					|| node.bd.checkCompete(isW+1,i,j)
-				){	
+				){
 					continue;
 				}
 				jobs[i][j]=new AmafJob(node.bd);
@@ -541,7 +543,7 @@ class MyGame:public GTPAdapter
 		psch->go();
 		psch->wait();
 		delete psch;
-		
+
 		// sort the best choices for the nodeplayer, also delete "jobs"
 		double choice_mark[UCT_WIDTH];
 		Piece choices[UCT_WIDTH];
@@ -594,7 +596,7 @@ class MyGame:public GTPAdapter
 	bool onMove(int isW,int& a,int& b)
 	{
 		// play random
-		
+
 		/*Piece p = bd.getRandomPiece(isW+1);
 		if( p.isEmpty() ) return false;
 		else{
@@ -603,114 +605,156 @@ class MyGame:public GTPAdapter
 			return true;
 		}*/
 		// dprintf("Evaluation: %d\n",testAvrgWin(bd,isW,isW));
-		return false;
+		// return false;
 		bool domove=0;
-		if ( bd.num_black+bd.num_white <= 4 )
+		step++;
+		int own = isW+1;
+		if (step==1)
 		{
-			int takereg[9]={0};
-				int i,j;
-				for (i=0;i<4;++i)
-				{
-					for (j=0;j<4;++j)
-					{
-						if (bd.data[i][j]!=0)
-							takereg[0]=1;
-					}
-					for (j=4;j<9;++j)
-					{
-						if (bd.data[i][j]!=0)
-							takereg[1]=1;
-					}
-					for (j=9;j<13;++j)
-					{
-						if (bd.data[i][j]!=0)
-							takereg[2]=1;
-					}
-				}
-				for (i=4;i<9;++i)
-				{
-					for (j=0;j<4;++j)
-					{
-						if (bd.data[i][j]!=0)
-							takereg[3]=1;
-					}
-					for (j=4;j<9;++j)
-					{
-						if (bd.data[i][j]!=0)
-							takereg[4]=1;
-					}
-					for (j=9;j<13;++j)
-					{
-						if (bd.data[i][j]!=0)
-							takereg[5]=1;
-					}
-				}
-				for (i=9;i<13;++i)
-				{
-					for (j=0;j<4;++j)
-					{
-						if (bd.data[i][j]!=0)
-							takereg[6]=1;
-					}
-					for (j=4;j<9;++j)
-					{
-						if (bd.data[i][j]!=0)
-							takereg[7]=1;
-					}
-					for (j=9;j<13;++j)
-					{
-						if (bd.data[i][j]!=0)
-							takereg[8]=1;
-					}
-				}
-				if (takereg[0]==0)
-				{
-					a=3;
-					b=3;
-				}
-				else if (takereg[8]==0)
-				{
-					a=9;
-					b=9;
-				}
-				else if (takereg[2]==0)
-				{
-					a=3;
-					b=9;
-				}
-				else if (takereg[6]==0)
-				{
-					a=9;
-					b=3;
-				}
-				else if (takereg[1]==0)
-				{
-					a=3;
-					b=5;
-				}
-				else if (takereg[7]==0)
-				{
-					a=9;
-					b=7;
-				}
-				else if (takereg[3]==0)
-				{
-					a=7;
-					b=3;
-				}
-				else if (takereg[5]==0)
-				{
-					a=5;
-					b=9;
-				}
-				else
-				{
-					a=6;
-					b=6;
-				}
-			domove = true;
+			if (bd.data[3][3]==0)
+			{
+				a = 3; b = 3; return true;
+			}
+			else if (bd.data[9][9]==0)
+			{
+				a = 9; b = 9; return true;
+			}
 		}
-		else
+		if (step==2)
+		{
+			if (bd.data[3][9]==0)
+			{
+				a = 3; b = 9; return true;
+			}
+			else if (bd.data[9][3]==0)
+			{
+				a = 9; b = 3; return true;
+			}
+		}
+		if (step>=3 && step<=5)
+		{
+			if (bd.data[3][9]==0)
+			{
+				a = 3; b = 9; return true;
+			}
+			if (bd.data[9][3]==0)
+			{
+				a = 9; b = 3; return true;
+			}
+			if (bd.data[3][3]==0)
+			{
+				a = 3; b = 3; return true;
+			}
+			if (bd.data[9][9]==0)
+			{
+				a = 9; b = 9; return true;
+			}
+			if (bd.data[3][3]==own && bd.data[3][9]==own)
+			{
+				if (bd.data[3][6]==0)
+				{a = 3; b = 6; return true;}
+			}
+			if (bd.data[3][3]==own && bd.data[9][3]==own)
+			{
+				if (bd.data[6][3]==0)
+				{a = 6; b = 3; return true;}
+			}
+			if (bd.data[3][9]==own && bd.data[9][9]==own)
+			{
+				if (bd.data[6][9]==0)
+				{a = 6; b = 9; return true;}
+			}
+			if (bd.data[9][9]==own && bd.data[9][3]==own)
+			{
+				if (bd.data[9][6]==0)
+				{a = 9; b = 6; return true;}
+			}//
+			if (bd.data[3][3]==own)
+			{
+				if (bd.data[3][6]==0)
+				{a = 3; b = 6; return true;}
+				if (bd.data[6][3]==0)
+					{a = 6; b = 3; return true;}
+			}
+			if (bd.data[3][9]==own )
+			{
+				if (bd.data[3][6]==0)
+				{a = 3; b = 6; return true;}
+				if (bd.data[6][9]==0)
+				{a = 6; b = 9; return true;}
+			}////////
+			if (bd.data[6][6]==0)
+			{
+				{a = 6; b = 6; return true;}
+			}//////
+			if (bd.data[9][9]==own )
+			{
+				if (bd.data[6][9]==0)
+				{a = 6; b = 9; return true;}
+				if (bd.data[9][6]==0)
+				{a = 9; b = 6; return true;}
+			}
+			if (bd.data[9][3]==own)
+			{
+				if (bd.data[9][6]==0)
+				{a = 9; b = 6; return true;}
+				if (bd.data[6][3]==0)
+				{a = 6; b = 3; return true;}
+			}
+			//
+			
+			//
+			if (bd.data[3][3]==own && bd.data[3][9]==own)
+			{
+				if (bd.data[3][7]==0)
+				{a = 3; b = 7; return true;}
+			}
+			if (bd.data[3][3]==own && bd.data[9][3]==own)
+			{
+				if (bd.data[6][4]==0)
+				{a = 6; b = 4; return true;}
+			}
+			if (bd.data[3][9]==own && bd.data[9][9]==own)
+			{
+				if (bd.data[6][8]==0)
+				{a = 6; b = 8; return true;}
+			}
+			if (bd.data[9][9]==own && bd.data[9][3]==own)
+			{
+				if (bd.data[9][5]==0)
+				{a = 9; b = 5; return true;}
+			}//
+			if (bd.data[3][3]==own)
+			{
+				if (bd.data[4][6]==0)
+				{a = 4; b = 6; return true;}
+				if (bd.data[6][4]==0)
+					{a = 6; b = 4; return true;}
+			}
+			if (bd.data[3][9]==own )
+			{
+				if (bd.data[3][7]==0)
+				{a = 3; b = 7; return true;}
+				if (bd.data[6][8]==0)
+				{a = 6; b = 8; return true;}
+			}
+			if (bd.data[9][9]==own )
+			{
+				if (bd.data[6][8]==0)
+				{a = 6; b = 8; return true;}
+				if (bd.data[8][6]==0)
+				{a = 8; b = 6; return true;}
+			}
+			if (bd.data[9][3]==own)
+			{
+				if (bd.data[8][6]==0)
+				{a = 8; b = 6; return true;}
+				if (bd.data[6][4]==0)
+				{a = 6; b = 4; return true;}
+			}
+
+		}
+		else if (step>5)
 		{
 			// construct the uct
 			UCTree uct(true,isW,bd);
@@ -817,7 +861,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	delete psch;
 	//MessageBox(0,L"",L"",32);
 	printf("KKKKKKKKKKKKKKK\n");
-	
+
 	}
 	/*psch=new Scheduler<MyWorker>(10);
 	for( int i=0;i<100;i++)
