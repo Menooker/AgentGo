@@ -604,7 +604,7 @@ class MyGame:public GTPAdapter
 			b = p.col;
 			return true;
 		}*/
-		dprintf("Evaluation: %d\n",testAvrgWin(bd,isW,isW));
+		// dprintf("Evaluation: %d\n",testAvrgWin(bd,isW,isW));
 		return false;
 		bool domove=0;
 		if ( bd.num_black+bd.num_white <= 4 )
