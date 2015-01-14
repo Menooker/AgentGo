@@ -682,11 +682,7 @@ class MyGame:public GTPAdapter
 				{a = 3; b = 6; return true;}
 				if (bd.data[6][9]==0)
 				{a = 6; b = 9; return true;}
-			}////////
-			if (bd.data[6][6]==0)
-			{
-				{a = 6; b = 6; return true;}
-			}//////
+			}
 			if (bd.data[9][9]==own )
 			{
 				if (bd.data[6][9]==0)
@@ -701,6 +697,11 @@ class MyGame:public GTPAdapter
 				if (bd.data[6][3]==0)
 				{a = 6; b = 3; return true;}
 			}
+			////////
+			if (bd.data[6][6]==0)
+			{
+				{a = 6; b = 6; return true;}
+			}//////
 			//
 			
 			//
