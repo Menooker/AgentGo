@@ -350,6 +350,7 @@ Piece Board::getRandomPiece(int agent){
 		else return getRandomPieceComplex(agent);
 	}
 
+	//v1
 	//check the place around the last move with some probability
 	int enemy = 3 - agent;
 	int enmrow = last_move[enemy-1].row, enmcol = last_move[enemy-1].col;
@@ -363,6 +364,7 @@ Piece Board::getRandomPiece(int agent){
 				&& data[i][j] == GO_NULL
 				&& ( false
 				  || checkKill(agent,i,j)
+				  || checkPattern(agent,i,j)
 				  || k<6 && checkSurvive(agent,i,j)
 				  || k<4 && checkChase(agent,i,j)
 				)
@@ -379,17 +381,72 @@ Piece Board::getRandomPiece(int agent){
 		}
 	}
 
+	//v2
+	//check the place around the last move
+	//int enemy = 3 - agent;
+	//int enmrow = last_move[enemy-1].row, enmcol = last_move[enemy-1].col;
+	//if( !last_move[enemy-1].isEmpty() && data[enmrow][enmcol]==enemy ){
+	//	Piece cand[(2*RAND_CAND_RANGE+1)*(2*RAND_CAND_RANGE+1)];
+	//	int cand_size = 0;
+	//	bool skip[(2*RAND_CAND_RANGE+1)*(2*RAND_CAND_RANGE+1)];
+	//	memset(skip,0,sizeof(bool)*((2*RAND_CAND_RANGE+1)*(2*RAND_CAND_RANGE+1)));
+	//	
+	//	int mode = RAND_MODE_SURVIVE;
+	//	while( mode<RAND_MODE_ANY ){
+	//		// leave some probability that the step will be skipped
+	//		if ( rand()%RAND_MODE_JUMP < mode ){
+	//			mode++;
+	//			continue;
+	//		}
+	//		// find candidates in this mode
+	//		for (int i=enmrow-RAND_CAND_RANGE;i<=enmrow+RAND_CAND_RANGE;i++){
+	//			for (int j=enmcol-RAND_CAND_RANGE;j<=enmcol+RAND_CAND_RANGE;j++){
+	//				int idx = (i-(enmrow-RAND_CAND_RANGE))*(2*RAND_CAND_RANGE+1) + (j-(enmcol-RAND_CAND_RANGE));
+	//				// true eyes will never be chosed, so don't worry
+	//				if( skip[idx] == true
+	//					|| data[i][j]!=GO_NULL
+	//					|| ( i<0 || i>=BOARD_SIZE || j<0 || j>=BOARD_SIZE )
+	//					|| checkDying(agent,i,j)
+	//					|| checkTrueEye(agent,i,j)
+	//					|| checkSuicide(agent,i,j)
+	//					|| checkCompete(agent,i,j)
+	//				){
+	//					skip[idx] = true;
+	//					continue;
+	//				}
+	//				if( false
+	//					|| mode==RAND_MODE_SURVIVE && checkSurvive(agent,i,j)
+	//					|| mode==RAND_MODE_PATTERN && checkPattern(agent,i,j)
+	//					|| mode==RAND_MODE_KILL && checkKill(agent,i,j)
+	//					|| mode==RAND_MODE_CHASE && checkChase(agent,i,j)
+	//				){
+	//					cand[cand_size] = Piece(agent,i,j);
+	//					cand_size++;
+	//				}
+	//			}
+	//		}
+	//		if (cand_size>0){
+	//			return cand[ rand()%cand_size ];
+	//		}
+	//		// else, in this mode no piece could be chosen
+	//		cand_size = 0;
+	//		mode++;
+	//	}
+	//}
+
 	int count = 0;
 	while(flag){
 		flag = false;
 		count ++;
 		row = rand() % BOARD_SIZE;
 		col = rand() % BOARD_SIZE;
-		if( data[row][col]!=GO_NULL
+		if( false
+			|| data[row][col]!=GO_NULL
 			//|| count<20 && !checkKeyPlace(agent,row,col)
 			//|| count<20 && !checkGoodPlace(agent,row,col)
 			//|| !checkNeighbour(agent,row,col)
 			//|| !checkDistFar(agent,row,col)
+
 			|| checkNoSense(agent,row,col)
 			|| checkDying(agent,row,col)
 			|| checkTrueEye(agent,row,col) 
@@ -565,8 +622,7 @@ bool Board::checkKill(int agent, int row, int col){
 bool Board::checkSurvive(int agent, int row, int col){
 	int rival = 3 - agent;
 	
-	// Survive is a place where the enemy could kill you but you can save yourself by putting here.
-	if( !checkKill(rival,row,col) ) return false;
+	// Survive is a place where the neighbours are dying but coud be saved here
 	int i = row, j = col;
 	int hp_new = 0;
 	bool enemy[4] = {0,0,0,0};
@@ -612,17 +668,19 @@ bool Board::checkSurvive(int agent, int row, int col){
 		}
 	}
 	int hp_min = 9999;
+	bool chase = false;
 	// if the place will enlarge the total hp return true, if any enemy could be killed return true
 	for( int m=0; m<4; m++){
 		if( s[m]!=NULL && ( enemy[m]==true && (s[m]->hp)-minus_hp[m]==0 ) ) return true;
-		if( s[m]!=NULL && enemy[m]==false ){
+		else if( s[m]!=NULL && enemy[m]==false ){
 			hp_new += s[m]->hp - minus_hp[m];
 			if( s[m]->hp < hp_min ){
 				hp_min = s[m]->hp;
 			}
 		}
 	}
-	return (hp_new>hp_min);
+	if ( hp_min>1 ) return false;
+	return ( hp_new>hp_min );
 }
 
 bool Board::checkDying(int agent, int row, int col){
@@ -881,9 +939,13 @@ inline bool Board::checkDistFar(int agent,int row,int col){
 }
 
 bool Board::checkNoSense(int agent, int row, int col){
+	bool at_border = (row==0 || row==BOARD_SIZE-1 || col==0 || col==BOARD_SIZE-1);
+	bool near_border = (row<=1 || row>=BOARD_SIZE-2 || col<=1 || col>=BOARD_SIZE-2);
+	if( !near_border ) return false;
 	int enemy = 3 - agent;
 	int nb_self_1 = 0, nb_enemy_1 = 0, nb_self_2 = 0, nb_enemy_2 = 0;
 	int range = 1;
+
 	for( int i = row-range; i<=row+range; i++ ){
 		for( int j = col-range; j<=col+range; j++ ){
 			if ( i==row && j==col ) continue;
@@ -891,7 +953,6 @@ bool Board::checkNoSense(int agent, int row, int col){
 			else if ( checkPiece(enemy,i,j) ) nb_enemy_1++;
 		}
 	}
-	bool at_border = (row==0 || row==BOARD_SIZE-1 || col==0 || col==BOARD_SIZE-1);
 	bool at_islbd = ( nb_enemy_1+nb_self_1==0 ) && at_border;
 	range = 2;
 	for( int i = row-range; i<=row+range; i++ ){
@@ -901,7 +962,6 @@ bool Board::checkNoSense(int agent, int row, int col){
 			else if ( checkPiece(enemy,i,j) ) nb_enemy_2++;
 		}
 	}
-	bool near_border = (row<=1 || row>=BOARD_SIZE-2 || col<=1 || col>=BOARD_SIZE-2);
 	bool near_islbd = ( nb_enemy_2+nb_self_2==0 ) && near_border;
 	
 	if( at_islbd || near_islbd ) return true;
@@ -922,4 +982,113 @@ int Board::countScore(int agent){
 		}
 	}
 	return count;
+}
+
+inline int Board::getColorS(int row, int col){
+	if( row>=0 && row<BOARD_SIZE && col>=0 && col<BOARD_SIZE ) return data[row][col];
+	else return GO_BORDER;
+}
+int Board::getPatternHash(int row, int col){
+	int nb[8],hash[8];
+	nb[0] = getColorS(row-1,col);
+	nb[1] = getColorS(row-1,col+1);
+	nb[2] = getColorS(row,col+1);
+	nb[3] = getColorS(row+1,col+1);
+	nb[4] = getColorS(row+1,col);
+	nb[5] = getColorS(row+1,col-1);
+	nb[6] = getColorS(row,col-1);
+	nb[7] = getColorS(row-1,col-1);
+	hash[0] = (nb[0]<<14)+(nb[1]<<12)+(nb[2]<<10)+(nb[3]<<8)+(nb[4]<<6)+(nb[5]<<4)+(nb[6]<<2)+nb[7];
+	hash[1] = (nb[2]<<14)+(nb[3]<<12)+(nb[4]<<10)+(nb[5]<<8)+(nb[6]<<6)+(nb[7]<<4)+(nb[0]<<2)+nb[1];
+	hash[2] = (nb[4]<<14)+(nb[5]<<12)+(nb[6]<<10)+(nb[7]<<8)+(nb[0]<<6)+(nb[1]<<4)+(nb[2]<<2)+nb[3];
+	hash[3] = (nb[6]<<14)+(nb[7]<<12)+(nb[0]<<10)+(nb[1]<<8)+(nb[2]<<6)+(nb[3]<<4)+(nb[4]<<2)+nb[5];
+	hash[4] = (nb[0]<<14)+(nb[7]<<12)+(nb[6]<<10)+(nb[5]<<8)+(nb[4]<<6)+(nb[3]<<4)+(nb[2]<<2)+nb[1];
+	hash[5] = (nb[6]<<14)+(nb[5]<<12)+(nb[4]<<10)+(nb[3]<<8)+(nb[2]<<6)+(nb[1]<<4)+(nb[0]<<2)+nb[7];
+	hash[6] = (nb[4]<<14)+(nb[3]<<12)+(nb[2]<<10)+(nb[1]<<8)+(nb[0]<<6)+(nb[7]<<4)+(nb[6]<<2)+nb[5];
+	hash[7] = (nb[2]<<14)+(nb[1]<<12)+(nb[0]<<10)+(nb[7]<<8)+(nb[6]<<6)+(nb[5]<<4)+(nb[4]<<2)+nb[3];
+	int hash_max = 0;
+	for( int i=0; i<8; i++ ){
+		if( hash[i]>hash_max ) hash_max = hash[i];
+	}
+	return hash_max;
+}
+
+bool Board::checkPattern(int agent, int row, int col){
+	int ph = getPatternHash(row,col);
+	if( row>0 && row<BOARD_SIZE-1 && col>0 && col<BOARD_SIZE-1){
+		if(false
+			|| ph==36865 || ph==36929|| ph==36993 || ph==37121 || ph==37185 || ph==37264|| ph==37377 || ph==37441 || ph==41360
+			|| ph==37121 || ph==37264|| ph==37185 || ph==37393 || ph==41361 || ph==37457|| ph==37137 || ph==37265 || ph==37201
+			|| ph==37377 || ph==37441|| ph==41360 || ph==37393 || ph==37457 || ph==41361|| ph==37409 || ph==37473 || ph==41362
+
+			|| ph==24898 || ph==37472|| ph==24834 || ph==25184 || ph==41568 || ph==25090|| ph==24642 || ph==33376 || ph==24578
+			|| ph==25185 || ph==41569|| ph==25106 || ph==25186 || ph==41570 || ph==25122|| ph==25184 || ph==41568 || ph==37201
+			|| ph==24914 || ph==37473|| ph==24850 || ph==25185 || ph==41569 || ph==25090|| ph==24898 || ph==37472 || ph==24834
+
+			|| ph==36880 || ph==37136|| ph==37392 || ph==36896 || ph==37152 || ph==37408|| ph==36864 || ph==37120 || ph==37376
+
+			|| ph==24848 || ph==24592|| ph==24864 || ph==25120 || ph==24608 || ph==24832|| ph==25088 || ph==24576 || ph==25104
+
+			|| ph==37920 || ph==37904|| ph==37888 || ph==37921 || ph==37905 || ph==37889|| ph==41477 || ph==41221 || ph==40965
+			|| ph==38176 || ph==38160|| ph==38144 || ph==38177 || ph==38161 || ph==38145|| ph==41493 || ph==41237 || ph==40981
+			|| ph==38432 || ph==38416|| ph==38400 || ph==38433 || ph==38417 || ph==38401|| ph==41509 || ph==41253 || ph==40997
+
+			|| ph==42001 || ph==42017|| ph==41985 || ph==42513 || ph==42529 || ph==42497|| ph==42257 || ph==42273 || ph==42241
+			|| ph==42002 || ph==42018|| ph==41986 || ph==42514 || ph==42530 || ph==42498|| ph==42258 || ph==42274 || ph==42242
+			|| ph==42003 || ph==42019|| ph==41987 || ph==42515 || ph==42531 || ph==42499|| ph==42259 || ph==42275 || ph==42243
+
+			|| (agent==GO_BLACK && (ph==40977 ||ph==40993 ||ph==40961 ||ph==41489 
+			||ph==41505 ||ph==41473 ||ph==41233 ||ph==41249 ||ph==41217 )) 
+			|| (agent==GO_WHITE && (ph==24609 ||ph==24593 ||ph==24577 ||ph==24865
+			||ph==24849 ||ph==24833 ||ph==25121 ||ph==25105 ||ph==25089 )) 
+
+
+			|| ph==34816 || ph==17408
+			|| ph==36865 || ph==24578
+			|| ph==33920 || ph==33996 || ph==33924 || ph==38020 || ph==37252 || ph==38276
+			|| ph==33796 || ph==34308 || ph==42116 || ph==34340 || ph==42118
+			|| ph==36868 || ph==34304 || ph==41985 || ph==38400
+		){
+			return true;
+		}
+		return false;
+	}
+	else{
+		if(false
+			|| ph==63747 || ph==62979
+			|| ph==63559 || ph==63623
+			|| (agent==GO_BLACK && ph==62019) || (agent==GO_WHITE && ph==61827)
+			|| (agent==GO_BLACK && ph==63043) || (agent==GO_WHITE && ph==63875)
+			|| (agent==GO_BLACK && ph==63879) || (agent==GO_WHITE && ph==63591)
+		){
+			return true;
+		}
+		return false;
+	}
+}
+
+void Board::initZobristRand(){
+	for( int i=0; i<BOARD_SIZE; i++ ){
+		for( int j=0; j<BOARD_SIZE; j++ ){
+			for( int a=0; a<3; a++ ){
+				__int64 r1 = rand();
+				__int64 r2 = rand();
+				__int64 r3 = rand();
+				__int64 r4 = rand();
+				zobrist_rand[a][i][j] = r1<<48 + r2<<32 + r3<<16 + r4;
+			}
+		}
+	}
+}
+
+
+__int64 Board::getZobristHash(){
+	__int64 hash = 0;
+	for( int i=0; i<BOARD_SIZE; i++ ){
+		for( int j=0; j<BOARD_SIZE; j++ ){
+			int a = data[i][j];
+			hash = hash ^ zobrist_rand[a][i][j];
+		}
+	}
+	return hash;
 }

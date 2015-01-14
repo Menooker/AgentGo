@@ -7,10 +7,21 @@
 #include <time.h>
 #include <stack>
 
+// parameters
 #define MAX_HISTORY_LENGTH	1000
 
 #define SPACE_HEAD_NULL		(-1)
 #define ENDING_THRESHOLD    100
+#define RAND_CAND_RANGE		1
+
+// alias
+
+#define RAND_MODE_SURVIVE	0
+#define RAND_MODE_PATTERN	1
+#define RAND_MODE_KILL		2
+#define RAND_MODE_CHASE		3
+#define RAND_MODE_ANY		4
+#define RAND_MODE_JUMP		5
 
 using namespace std;
 
@@ -36,6 +47,8 @@ private:
 	void updateDistance(int agent,int row,int col);
 	void setDistance(int agent,int row,int col,int dist);
 	inline bool checkDistFar(int agent,int row,int col);
+	inline int getColorS(int row, int col);
+	
 
 public:
 	// Variables
@@ -50,7 +63,7 @@ public:
 	bool   exist_compete;
 	int    compete[3];	// agent, row, col, agent is the one who has just been killed i.e. the one who could not put in this place
 	Piece  last_move[2];
-
+	__int64 zobrist_rand[3][BOARD_SIZE][BOARD_SIZE];
 
 #ifdef GO_BOARD_TIME
 	long   time_put;
@@ -86,9 +99,14 @@ public:
 	bool checkDying(int agent, int row, int col);
 	bool checkKill(int agent, int row, int col);
 	bool checkNoSense(int agent, int row, int col);
+	bool checkPattern(int agent, int row, int col);
+	int getPatternHash(int row, int col);
 	int countScore(int agent);
 	inline bool checkCompete(int agent, int row, int col);	// returns true if this place not not allowed for the agent to put ( reserved fot the enemy )
 	void release(); // delete the array pointers
+
+	void initZobristRand();
+	__int64 getZobristHash();
 	
 };
 

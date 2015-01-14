@@ -11,7 +11,7 @@
 #define GO_NULL	     0
 #define GO_BLACK     1
 #define GO_WHITE     2
-#define GO_BOTH      3
+#define GO_BORDER    3
 #define BOARD_SIZE	 13
 #define AMAF_RANGE   40
 #define NUMSET_PRETEST 500

@@ -1,4 +1,4 @@
-// AgentGo.cpp : ¶¨Òå¿ØÖÆÌ¨Ó¦ÓÃ³ÌĞòµÄÈë¿Úµã¡£
+ï»¿// AgentGo.cpp : å®šä¹‰æ§åˆ¶å°åº”ç”¨ç¨‹åºçš„å…¥å£ç‚¹ã€‚
 //
 
 #include "stdafx.h"
@@ -10,7 +10,7 @@
 #include "Board.h"
 #include "UCTree.h"
 #include "TinyOP.h"
-
+#include <stdio.h>
 using namespace TinyMT;
 
 TinyOP<Board> boardpool(1000);
@@ -114,16 +114,16 @@ class AmafWorker:public SWorker
 		// the larger the avrg_win the larger cnsv
 		double cnsv = pow(2., (mj->avrg_win)*index_cnsv);
 		/*
-		//Ìá×Ó
+		//æå­
 		//if( bd_copy.checkKill(agent,row,col) ) total_mark[row][col] += bonus_a;
-		//ËÀÆå
+		//æ­»æ£‹
 		if( bd_copy.checkDying(agent,row,col) ) total_mark[row][col] -= bonus_a;
-		//ÎŞÒâÒåµÄ±ß½Ç
+		//æ— æ„ä¹‰çš„è¾¹è§’
 		if( bd_copy.checkNoSense(agent,row,col) ) total_mark[row][col] -= bonus_a;
-		//ÌÓ
+		//é€ƒ
 		if( bd_copy.checkSurvive(agent,row,col) ) total_mark[row][col] += bonus_b;
 
-		//Á¬
+		//è¿
 		if (row>=0 && row<=12 && col-1>=0 && col-1<=12 && mj->bd->data[row][col-1]==agent+1)
 		{
 			total_mark[row][col]+=bonus_b;
@@ -156,7 +156,7 @@ class AmafWorker:public SWorker
 		{
 			total_mark[row][col]-=bonus_b;
 		}
-		//¼â
+		//å°–
 		if (row+1>=0 && row+1<=12 && col+1>=0 && col+1<=12 && mj->bd->data[row+1][col+1]==agent+1)
 		{
 			total_mark[row][col]+=bonus_b;
@@ -189,7 +189,7 @@ class AmafWorker:public SWorker
 		{
 			total_mark[row][col]-=bonus_b;
 		}
-		//·É
+		//é£
 		if (row-1>=0 && row-1<=12 && col+2>=0 && col+2<=12 && mj->bd->data[row-1][col+2]==agent+1)
 		{
 			total_mark[row][col]+=bonus_b;
@@ -254,7 +254,7 @@ class AmafWorker:public SWorker
 		{
 			total_mark[row][col]-=bonus_b;
 		}
-		///¶Ï
+		///æ–­
 		if (row-1>=0 && row+1<=12 && col-1>=0 && col+1<=12
 			&& ((mj->bd->data[row][col+1]==agent || mj->bd->data[row][col-1]==agent) ||
 			(mj->bd->data[row-1][col+1]==agent && mj->bd->data[row-1][col-1]==agent) ||
@@ -606,6 +606,29 @@ class MyGame:public GTPAdapter
 		}*/
 		// dprintf("Evaluation: %d\n",testAvrgWin(bd,isW,isW));
 		// return false;
+
+		//FILE *out;
+		// if ((out = fopen("hash.txt", "wt")) == NULL)
+		// {
+		// } 
+		// else
+		// {
+		//  dprintf("yes\n");
+		//  fprintf(out,"%s","å‰‘æ¡¥å¤§å­¦\n");
+		// }
+		// fclose(out);
+
+		/*dprintf("11 %d\n",bd.getPatternHash(1,1));
+		dprintf("15 %d\n",bd.getPatternHash(1,5));
+		dprintf("19 %d\n",bd.getPatternHash(1,9));
+		dprintf("51 %d\n",bd.getPatternHash(5,1));
+		dprintf("55 %d\n",bd.getPatternHash(5,5));
+		dprintf("59 %d\n",bd.getPatternHash(5,9));
+		dprintf("91 %d\n",bd.getPatternHash(9,1));
+		dprintf("95 %d\n",bd.getPatternHash(9,5));
+		dprintf("99 %d\n",bd.getPatternHash(9,9));
+		return false;*/
+
 		bool domove=0;
 		step++;
 		int own = isW+1;
@@ -821,19 +844,14 @@ int _tmain(int argc, _TCHAR* argv[])
 	srand(time(0));
 	MyGame gm;
 	gm.MainLoop();
-	/*
-	Board bd;
-	bd.put(2,1,0);
-	bd.put(2,1,1);
-	bd.put(2,0,1);
-	bd.put(1,2,0);
-	bd.put(1,2,1);
-	bd.put(1,2,2);
-	bd.put(1,1,2);
-	bd.put(1,0,2);
-	bool a=bd.checkSuicide(1,0,0);
-	printf("%d",a);
-	*/
+	
+	/*Board bd;
+	bd.put(1,6,7);
+	bd.put(2,5,7);
+	bd.put(2,7,7);
+	int a=bd.getPatternHash(6,6);
+	printf("%d",a);*/
+	
 	return 0;
 }
 
