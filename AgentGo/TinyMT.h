@@ -449,7 +449,9 @@ public:
 
 	void wait()
 	{
-		WaitForSingleObject(fevent,-1);
+		if(cnt>0)
+			WaitForSingleObject(fevent,-1);
+		cnt=0;
 	}
 
 	void end()
