@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-f=open('hash1.txt')
+f=open('hash.txt')
 s = f.readline()
 ss=''''''
 while True:

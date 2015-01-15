@@ -363,9 +363,9 @@ Piece Board::getRandomPiece(int agent){
 			if( (i>=0 && i<BOARD_SIZE && j>=0 && j<BOARD_SIZE)
 				&& data[i][j] == GO_NULL
 				&& ( false
-				  || checkKill(agent,i,j)
-				  || checkPattern(agent,i,j)
-				  || k<6 && checkSurvive(agent,i,j)
+				  || checkSurvive(agent,i,j)
+				  || k<7 && checkPattern(agent,i,j)
+				  || k<6 &&  checkKill(agent,i,j)
 				  || k<4 && checkChase(agent,i,j)
 				)
 				&& !checkDying(agent,i,j)
@@ -1087,7 +1087,10 @@ bool Board::checkPattern(int agent, int row, int col){
 			|| ph==43432|| ph==43416
 
 
-
+			|| ph==63747|| ph==63755|| ph==63751|| ph==63767|| ph==63771|| ph==63763|| ph==63783|| ph==64027|| ph==63779
+			|| ph==62979|| ph==63527|| ph==62983|| ph==63783|| ph==62999|| ph==62995|| ph==63015|| ph==64039|| ph==63011
+			|| ph==63559|| ph==63815|| ph==64071|| ph==63575|| ph==63831|| ph==64087|| ph==63591|| ph==63847|| ph==64103
+			|| ph==63623|| ph==63655|| ph==63639|| ph==63895|| ph==63911|| ph==63879|| ph==64135|| ph==64151|| ph==64167
 
 			|| ph==34816 || ph==17408
 			|| ph==36865 || ph==24578
