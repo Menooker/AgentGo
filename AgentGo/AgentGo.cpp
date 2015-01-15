@@ -607,7 +607,7 @@ class MyGame:public GTPAdapter
 		// dprintf("Evaluation: %d\n",testAvrgWin(bd,isW,isW));
 		// return false;
 
-		FILE *out;
+		/*FILE *out;
 		 if ((out = fopen("F:\\\\AgentGO\\hash.txt", "a")) == NULL)
 		 {
 		 } 
@@ -619,7 +619,7 @@ class MyGame:public GTPAdapter
 			  bd.getPatternHash(5,12),bd.getPatternHash(9,12),bd.getPatternHash(12,8)
 			  );
 		 }
-		 fclose(out);
+		 fclose(out);*/
 
 		//dprintf("11 %d\n",bd.getPatternHash(1,1));
 		//dprintf("15 %d\n",bd.getPatternHash(1,5));
@@ -630,7 +630,7 @@ class MyGame:public GTPAdapter
 		//dprintf("91 %d\n",bd.getPatternHash(9,1));
 		//dprintf("95 %d\n",bd.getPatternHash(9,5));
 		//dprintf("99 %d\n",bd.getPatternHash(9,9));
-		return false;
+		/*return false;*/
 
 		bool domove=0;
 		step++;
