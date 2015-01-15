@@ -10,7 +10,7 @@
 #define MAX_HISTORY_LENGTH	1000
 
 #define SPACE_HEAD_NULL		(-1)
-#define ENDING_THRESHOLD    100
+#define ENDING_THRESHOLD    70
 
 using namespace std;
 
@@ -35,7 +35,6 @@ private:
 	inline bool checkChase(int agent,int row,int col);
 	void updateDistance(int agent,int row,int col);
 	void setDistance(int agent,int row,int col,int dist);
-	inline bool checkDistFar(int agent,int row,int col);
 
 public:
 	// Variables
@@ -48,6 +47,7 @@ public:
 	int    reserve_total;	// total number of the reserved place for each
 	int    true_eyes[2];
 	bool   exist_compete;
+	bool   use_dist;
 	int    compete[3];	// agent, row, col, agent is the one who has just been killed i.e. the one who could not put in this place
 	Piece  last_move[2];
 
@@ -86,6 +86,7 @@ public:
 	bool checkDying(int agent, int row, int col);
 	bool checkKill(int agent, int row, int col);
 	bool checkNoSense(int agent, int row, int col);
+	bool checkDistFar(int agent,int row,int col);
 	int countScore(int agent);
 	inline bool checkCompete(int agent, int row, int col);	// returns true if this place not not allowed for the agent to put ( reserved fot the enemy )
 	void release(); // delete the array pointers

@@ -49,6 +49,7 @@ public:
 	AmafJob(Board& old)
 	{
 		bd=boardpool.tnew(&old);
+		bd->use_dist = false;
 		//bd=new Board(old);
 		for (int i=0;i<13;++i)
 		{
@@ -523,11 +524,12 @@ class MyGame:public GTPAdapter
 			for( j=0; j<13; j++ )
 			{
 				if( false
-					|| node.bd.checkTrueEye(isW+1,i,j)
 					|| node.bd.data[i][j]!=GO_NULL
+					|| node.bd.checkTrueEye(isW+1,i,j)
 					|| node.bd.checkSuicide(isW+1,i,j)
 					|| node.bd.checkNoSense(isW+1,i,j)
 					|| node.bd.checkCompete(isW+1,i,j)
+					|| !node.bd.checkDistFar(isW+1,i,j)
 				){	
 					continue;
 				}
@@ -714,13 +716,14 @@ class MyGame:public GTPAdapter
 		}
 		else
 		{
+			clock_t clk=clock();
 			// construct the uct
 			UCTree uct(true,isW,bd);
 			expandUCNode(uct.root,isW);
 			for( int i=0; i<UCT_WIDTH; i++ ){
 				expandUCNode(*uct.root.children[i],isW);
 			}
-
+			dprintf("A:%d\n",clock()-clk);clk=clock();
 			// mark the score of leaf nodes
 			NodeScoreJob* jobs[UCT_WIDTH*UCT_WIDTH]={0};
 			Scheduler<NodeScoreWorker>* psch=new Scheduler<NodeScoreWorker>(true);
@@ -737,6 +740,7 @@ class MyGame:public GTPAdapter
 			}
 			psch->go();
 			psch->wait();
+			dprintf("B:%d\n",clock()-clk);clk=clock();
 			for( int i=0; i<UCT_WIDTH*UCT_WIDTH; i++ ){
 				delete jobs[i];
 				jobs[i] = 0;

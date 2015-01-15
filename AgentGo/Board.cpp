@@ -63,6 +63,7 @@ void Board::clear(){
 	#endif
 	last_move[0].clear();
 	last_move[1].clear();
+	use_dist = true;
 }
 
 bool Board::put(int agent,int row,int col){
@@ -166,7 +167,7 @@ bool Board::put(int agent,int row,int col){
 	snself->hp += hp;
 	if( snself->hp == 0 ) killSetNode(snself);
 	else{
-		//updateDistance(agent,i,j);
+		if(use_dist) updateDistance(agent,i,j);
 	}
 	last_move[agent-1] = Piece(agent,row,col);
 
@@ -251,6 +252,7 @@ void Board::clone(const Board &board){
 	game_ending = board.game_ending;
 	last_move[0] = board.last_move[0];
 	last_move[1] = board.last_move[1];
+	use_dist = board.use_dist;
 }
 
 void Board::release(){
@@ -349,32 +351,33 @@ Piece Board::getRandomPiece(int agent){
 		if( num_black+num_white<=120) game_ending = false;
 		else return getRandomPieceComplex(agent);
 	}
-
-	//check the place around the last move with some probability
-	int enemy = 3 - agent;
-	int enmrow = last_move[enemy-1].row, enmcol = last_move[enemy-1].col;
-	if( !last_move[enemy-1].isEmpty() && data[enmrow][enmcol]==enemy ){
-		int range = 1;
-		// the probability of a sorrounding place to be check: 1-(1-1/(2*range+1)^2)^k
-		for( int k=0; k<9; k++){
-			int i = enmrow - range + ( rand() % (2*range+1));
-			int j = enmcol - range + ( rand() % (2*range+1));
-			if( (i>=0 && i<BOARD_SIZE && j>=0 && j<BOARD_SIZE)
-				&& data[i][j] == GO_NULL
-				&& ( false
-				  || checkKill(agent,i,j)
-				  || k<6 && checkSurvive(agent,i,j)
-				  || k<4 && checkChase(agent,i,j)
-				)
-				&& !checkDying(agent,i,j)
-				&& !checkTrueEye(agent,i,j) 
-				&& !checkSuicide(agent,i,j)
-				&& !checkCompete(agent,i,j)
-			){
-				row = i;
-				col = j;
-				flag = false;
-				break;
+	if( num_black + num_white > RANDOM_IMPROVE_POINT ){
+		//check the place around the last move with some probability
+		int enemy = 3 - agent;
+		int enmrow = last_move[enemy-1].row, enmcol = last_move[enemy-1].col;
+		if( !last_move[enemy-1].isEmpty() && data[enmrow][enmcol]==enemy ){
+			int range = 1;
+			// the probability of a sorrounding place to be check: 1-(1-1/(2*range+1)^2)^k
+			for( int k=0; k<9; k++){
+				int i = enmrow - range + ( rand() % (2*range+1));
+				int j = enmcol - range + ( rand() % (2*range+1));
+				if( (i>=0 && i<BOARD_SIZE && j>=0 && j<BOARD_SIZE)
+					&& data[i][j] == GO_NULL
+					&& ( false
+					  || checkKill(agent,i,j)
+					  || k<6 && checkSurvive(agent,i,j)
+					  || k<4 && checkChase(agent,i,j)
+					)
+					&& !checkDying(agent,i,j)
+					&& !checkTrueEye(agent,i,j) 
+					&& !checkSuicide(agent,i,j)
+					&& !checkCompete(agent,i,j)
+				){
+					row = i;
+					col = j;
+					flag = false;
+					break;
+				}
 			}
 		}
 	}
@@ -874,10 +877,13 @@ void Board::setDistance(int agent,int row,int col,int dist){
 	if( distance[row*BOARD_SIZE+col][agent-1]>dist ) distance[row*BOARD_SIZE+col][agent-1] = dist;
 }
 
-inline bool Board::checkDistFar(int agent,int row,int col){
+bool Board::checkDistFar(int agent,int row,int col){
 	int enemy = 3 - agent;
-	int threshold = -1;
-	return ( distance[row*BOARD_SIZE+col][agent-1]-distance[row*BOARD_SIZE+col][enemy-1] >= threshold );
+	int threshold_1 = -1;
+	int threshold_2 = 2;
+	return ( distance[row*BOARD_SIZE+col][agent-1]-distance[row*BOARD_SIZE+col][enemy-1] >= threshold_1
+		&& distance[row*BOARD_SIZE+col][agent-1]-distance[row*BOARD_SIZE+col][enemy-1] <= threshold_2
+		);
 }
 
 bool Board::checkNoSense(int agent, int row, int col){
