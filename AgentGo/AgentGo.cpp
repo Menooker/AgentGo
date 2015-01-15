@@ -605,7 +605,7 @@ class MyGame:public GTPAdapter
 			return true;
 		}*/
 		// dprintf("Evaluation: %d\n",testAvrgWin(bd,isW,isW));
-		return false;
+		//return false;
 		bool domove=0;
 		if ( bd.num_black+bd.num_white <= 4 )
 		{
@@ -740,7 +740,7 @@ class MyGame:public GTPAdapter
 			for( int i=0; i<UCT_WIDTH*UCT_WIDTH; i++ ){
 				delete jobs[i];
 				jobs[i] = 0;
-#endif
+
 			}
 
 			// minmax and make the move
@@ -749,6 +749,7 @@ class MyGame:public GTPAdapter
 			a = pc.row;
 			b = pc.col;
 			uct.clear();
+			delete psch;
 		}
 		if (domove)
 			return true;
@@ -756,7 +757,7 @@ class MyGame:public GTPAdapter
 			return false;
 	}
 #ifdef TMT_USE_WIN_API
-public:
+/*public:
 	MyGame()
 	{
 		psch=new Scheduler<MyWorker>(true);
@@ -764,7 +765,7 @@ public:
 	~MyGame()
 	{
 		delete psch;
-	}
+	}*/
 #endif
 };
 
