@@ -607,27 +607,30 @@ class MyGame:public GTPAdapter
 		// dprintf("Evaluation: %d\n",testAvrgWin(bd,isW,isW));
 		// return false;
 
-		//FILE *out;
-		// if ((out = fopen("hash.txt", "wt")) == NULL)
-		// {
-		// } 
-		// else
-		// {
-		//  dprintf("yes\n");
-		//  fprintf(out,"%s","剑桥大学\n");
-		// }
-		// fclose(out);
+		/*FILE *out;
+		 if ((out = fopen("F:\\\\AgentGO\\hash.txt", "a")) == NULL)
+		 {
+		 } 
+		 else
+		 {
+		  fprintf(out,"\n--------------------------------\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n--------------------------------\n",
+			  bd.getPatternHash(1,1),bd.getPatternHash(1,5),bd.getPatternHash(1,9),
+			  bd.getPatternHash(5,1),bd.getPatternHash(5,5),bd.getPatternHash(5,9),
+			  bd.getPatternHash(9,1),bd.getPatternHash(9,5),bd.getPatternHash(9,9)
+			  );
+		 }
+		 fclose(out);*/
 
-		/*dprintf("11 %d\n",bd.getPatternHash(1,1));
-		dprintf("15 %d\n",bd.getPatternHash(1,5));
-		dprintf("19 %d\n",bd.getPatternHash(1,9));
-		dprintf("51 %d\n",bd.getPatternHash(5,1));
-		dprintf("55 %d\n",bd.getPatternHash(5,5));
-		dprintf("59 %d\n",bd.getPatternHash(5,9));
-		dprintf("91 %d\n",bd.getPatternHash(9,1));
-		dprintf("95 %d\n",bd.getPatternHash(9,5));
-		dprintf("99 %d\n",bd.getPatternHash(9,9));
-		return false;*/
+		//dprintf("11 %d\n",bd.getPatternHash(1,1));
+		//dprintf("15 %d\n",bd.getPatternHash(1,5));
+		//dprintf("19 %d\n",bd.getPatternHash(1,9));
+		//dprintf("51 %d\n",bd.getPatternHash(5,1));
+		//dprintf("55 %d\n",bd.getPatternHash(5,5));
+		//dprintf("59 %d\n",bd.getPatternHash(5,9));
+		//dprintf("91 %d\n",bd.getPatternHash(9,1));
+		//dprintf("95 %d\n",bd.getPatternHash(9,5));
+		//dprintf("99 %d\n",bd.getPatternHash(9,9));
+		/*return false;*/
 
 		bool domove=0;
 		step++;
@@ -652,6 +655,10 @@ class MyGame:public GTPAdapter
 			else if (bd.data[9][3]==0)
 			{
 				a = 9; b = 3; return true;
+			}
+			else if (bd.data[9][9]==0)
+			{
+				a = 9; b = 9; return true;
 			}
 		}
 		if (step>=3 && step<=5)
@@ -721,64 +728,46 @@ class MyGame:public GTPAdapter
 				{a = 6; b = 3; return true;}
 			}
 			////////
+			if (bd.data[3][6]==0)
+				{a = 3; b = 6; return true;}
+			//
+			if (bd.data[6][3]==0)
+				{a = 6; b = 3; return true;}
+			//
+			if (bd.data[6][9]==0)
+				{a = 6; b = 9; return true;}
+			//
+			if (bd.data[9][6]==0)
+				{a = 6; b = 6; return true;}
+			//
 			if (bd.data[6][6]==0)
 			{
 				{a = 6; b = 6; return true;}
 			}//////
-			//
-			
-			//
 			if (bd.data[3][3]==own && bd.data[3][9]==own)
 			{
-				if (bd.data[3][7]==0)
-				{a = 3; b = 7; return true;}
-			}
+				if (bd.data[5][6]==0)
+				{a = 5; b = 6; return true;}
+			}//////
 			if (bd.data[3][3]==own && bd.data[9][3]==own)
 			{
-				if (bd.data[6][4]==0)
-				{a = 6; b = 4; return true;}
-			}
+				if (bd.data[6][5]==0)
+				{a = 6; b = 5; return true;}
+			}//////
 			if (bd.data[3][9]==own && bd.data[9][9]==own)
 			{
-				if (bd.data[6][8]==0)
-				{a = 6; b = 8; return true;}
-			}
-			if (bd.data[9][9]==own && bd.data[9][3]==own)
+				if (bd.data[6][7]==0)
+				{a = 6; b = 7; return true;}
+			}//////
+			if (bd.data[9][3]==own && bd.data[9][9]==own)
 			{
-				if (bd.data[9][5]==0)
-				{a = 9; b = 5; return true;}
-			}//
-			if (bd.data[3][3]==own)
-			{
-				if (bd.data[4][6]==0)
-				{a = 4; b = 6; return true;}
-				if (bd.data[6][4]==0)
-					{a = 6; b = 4; return true;}
-			}
-			if (bd.data[3][9]==own )
-			{
-				if (bd.data[3][7]==0)
-				{a = 3; b = 7; return true;}
-				if (bd.data[6][8]==0)
-				{a = 6; b = 8; return true;}
-			}
-			if (bd.data[9][9]==own )
-			{
-				if (bd.data[6][8]==0)
-				{a = 6; b = 8; return true;}
-				if (bd.data[8][6]==0)
-				{a = 8; b = 6; return true;}
-			}
-			if (bd.data[9][3]==own)
-			{
-				if (bd.data[8][6]==0)
-				{a = 8; b = 6; return true;}
-				if (bd.data[6][4]==0)
-				{a = 6; b = 4; return true;}
-			}
+				if (bd.data[7][6]==0)
+				{a = 7; b = 6; return true;}
+			}//////
+			step++;
 
 		}
-		else if (step>5)
+		if (step>5)
 		{
 			// construct the uct
 			UCTree uct(true,isW,bd);
