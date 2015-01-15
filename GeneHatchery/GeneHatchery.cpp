@@ -848,6 +848,7 @@ void master(int slaves,int DNAs,double initDNA[],int cnt,int rounds,double* oldd
 		for(int i=0;i<cnt;i++)
 			sum+=scores[i];
 		fprintf(outfile,",%d,%lf\n",scores[sort_index[0]],sum/cnt);
+		printf("Average Score : %lf\n",sum/cnt);
 		fclose(outfile);
 
 		for(int i=cnt/2;i<cnt;i++) // make the next generation
@@ -1010,6 +1011,27 @@ int _tmain(int argc, _TCHAR* argv[])
 		{
 			ghp2txt(argv[2],argv[3]);
 			printf("success!\n");
+		}
+		else if(!wcscmp(argv[1],L"race") && argc==5)
+		{
+			DebugeeExe=argv[2];
+			ReferenceExe=argv[3];
+			int rnd=_wtoi(argv[4]);
+			int s1,s2;
+			s2=0;
+			for(int i=0;i<rnd;i++)
+			{
+				int index[2]={0,1};
+				s1= SimulateOneGame(0,0,index);
+				printf("1b2w: (1)-(2) = %d\n",s1);
+				s2+=s1;
+				index[0]=1;index[1]=0;
+				s1= -SimulateOneGame(0,0,index);
+				s2+=s1;
+				printf("1w2b: (1)-(2) = %d\n",s1);
+			}
+			printf("avg (1)-(2) = %d\n",s2/2/rnd);
+
 		}
 		else if (!wcscmp(argv[1],L"master"))
 		{
